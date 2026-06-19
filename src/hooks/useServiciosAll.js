@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { formatearErrorSupabase } from '../lib/validaciones'
 
 export function useServiciosAll() {
   const [servicios, setServicios] = useState([])
@@ -36,7 +37,7 @@ export function useServiciosAll() {
       .single()
     if (error) {
       if (error.code === '23505') throw new Error('Ya existe un servicio con ese nombre')
-      throw error
+      throw new Error(formatearErrorSupabase(error))
     }
     setServicios((prev) => [...prev, data].sort((a, b) => a.nombre.localeCompare(b.nombre)))
   }, [])
@@ -56,7 +57,7 @@ export function useServiciosAll() {
       .single()
     if (error) {
       if (error.code === '23505') throw new Error('Ya existe un servicio con ese nombre')
-      throw error
+      throw new Error(formatearErrorSupabase(error))
     }
     setServicios((prev) => prev.map((s) => (s.id === id ? data : s)))
   }, [])
@@ -65,6 +66,17 @@ export function useServiciosAll() {
     const servicio = servicios.find((s) => s.id === id)
     if (!servicio) return
     if (servicio.is_active) {
+      const today = new Date().toISOString().split('T')[0]
+      const { data: citas } = await supabase
+        .from('cita')
+        .select('id, hueco!inner(fecha, id_servicio)')
+        .in('estado', ['PROGRAMADA', 'EN_ESPERA'])
+        .gte('hueco.fecha', today)
+        .eq('hueco.id_servicio', id)
+        .limit(1)
+      if (citas?.length > 0) {
+        throw new Error('No se puede desactivar el servicio porque tiene citas programadas')
+      }
       const { data: plantillas } = await supabase
         .from('plantilla_horario')
         .select('id')
@@ -81,7 +93,7 @@ export function useServiciosAll() {
       .eq('id', id)
       .select(`id, nombre, descripcion, duracion_minutos, precio, is_active, categoria_sala ( id, nombre )`)
       .single()
-    if (error) throw error
+    if (error) throw new Error(formatearErrorSupabase(error))
     setServicios((prev) => prev.map((s) => (s.id === id ? data : s)))
   }, [servicios])
 

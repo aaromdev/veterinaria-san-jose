@@ -20,6 +20,21 @@ function calcularEdad(fechaNacimiento) {
 
 function MascotaCard({ mascota, onEliminar }) {
   const [confirmando, setConfirmando] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState(null)
+
+  const handleDelete = async () => {
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      await onEliminar(mascota.id)
+      setConfirmando(false)
+    } catch (err) {
+      setDeleteError(err.message)
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
     <div className="bg-white rounded-2xl border border-[#E8DDD0] p-5 hover:shadow-sm transition-shadow">
@@ -63,15 +78,14 @@ function MascotaCard({ mascota, onEliminar }) {
 
       <ConfirmModal
         open={confirmando}
-        onClose={() => setConfirmando(false)}
-        onConfirm={() => {
-          setConfirmando(false)
-          onEliminar(mascota.id)
-        }}
+        onClose={() => { setConfirmando(false); setDeleteError(null) }}
+        onConfirm={handleDelete}
         titulo="Eliminar mascota"
         mensaje={`¿Seguro que deseas eliminar a ${mascota.nombre}? Esta acción no se puede deshacer.`}
         confirmarTexto="Eliminar"
         variant="destructive"
+        loading={deleting}
+        error={deleteError}
       />
     </div>
   )

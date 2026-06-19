@@ -114,6 +114,21 @@ export function useUsuarios() {
 
   const toggleEstado = useCallback(async (cuentaId) => {
     setError(null)
+
+    const usuario = usuarios.find((u) => u.cuenta_id === cuentaId)
+    if (usuario?.tipo === 'CLIENTE') {
+      const { data: citas } = await supabase
+        .from('cita')
+        .select('id')
+        .eq('id_cliente', cuentaId)
+        .in('estado', ['PROGRAMADA', 'EN_ESPERA'])
+        .limit(1)
+      if (citas?.length > 0) {
+        setError('No se puede desactivar el usuario porque tiene citas pendientes')
+        return false
+      }
+    }
+
     const { error: rpcError } = await supabase
       .rpc('admin_toggle_estado', { p_cuenta_id: cuentaId })
     if (rpcError) {
@@ -122,7 +137,7 @@ export function useUsuarios() {
     }
     await cargar()
     return true
-  }, [cargar])
+  }, [cargar, usuarios])
 
   return { usuarios, loading, saving, error, crear, actualizar, toggleEstado, recargar: cargar, USUARIO_VACIO }
 }
