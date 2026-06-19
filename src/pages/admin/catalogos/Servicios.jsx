@@ -185,8 +185,8 @@ export function Servicios() {
         onGuardar={guardar}
         cargando={saving}
       >
-        <Input label="Nombre" value={form.nombre} onChange={handleChange('nombre')} error={errors.nombre} placeholder="Ej: Consulta general" maxLength={LIMITES.SERVICIO_NOMBRE} />
-        <Input label="Descripción (opcional)" value={form.descripcion} onChange={handleChange('descripcion')} placeholder="Breve descripción del servicio" />
+        <Input label="Nombre" value={form.nombre} onChange={handleChange('nombre')} error={errors.nombre} placeholder="Ej: Consulta general" maxLength={LIMITES.SERVICIO_NOMBRE} filter="alphanumeric" />
+        <Input label="Descripción (opcional)" value={form.descripcion} onChange={handleChange('descripcion')} placeholder="Breve descripción del servicio" filter="text" />
         <Select
           label="Categoría"
           placeholder="Seleccionar categoría"
@@ -196,8 +196,8 @@ export function Servicios() {
           error={errors.id_categoria_sala}
         />
         <div className="grid grid-cols-2 gap-4">
-          <Input label="Duración (min)" type="number" min="1" value={form.duracion_minutos} onChange={handleChange('duracion_minutos')} error={errors.duracion_minutos} placeholder="30" />
-          <Input label="Precio (S/)" type="number" min="0" step="0.01" value={form.precio} onChange={handleChange('precio')} error={errors.precio} placeholder="50.00" />
+          <Input label="Duración (min)" type="number" min="1" value={form.duracion_minutos} onChange={handleChange('duracion_minutos')} error={errors.duracion_minutos} placeholder="30" filter="digits" />
+          <Input label="Precio (S/)" type="number" min="0" step="0.01" value={form.precio} onChange={handleChange('precio')} error={errors.precio} placeholder="50.00" filter="decimal" />
         </div>
       </CatalogoModal>
     </CatalogoLayout>

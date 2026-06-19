@@ -85,6 +85,7 @@ export function PagoModal({ open, onClose, onConfirm, montoSugerido, saving, err
             onChange={(e) => setMonto(e.target.value)}
             error={errors.monto}
             placeholder="0.00"
+            filter="decimal"
           />
         </div>
 

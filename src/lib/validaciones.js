@@ -19,6 +19,22 @@ export const LIMITES = {
   EMAIL: 254,
 }
 
+const FILTER_REGEX = {
+  letters: /[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g,
+  alphanumeric: /[^a-zA-Z0-9áéíóúÁÉÍÓÚüÜñÑ\s.]/g,
+  digits: /\D/g,
+  decimal: /[^0-9.]/g,
+  text: /[^a-zA-Z0-9áéíóúÁÉÍÓÚüÜñÑ\s.,;:!¿?\-()]/g,
+  dosis: /[^a-zA-Z0-9áéíóúÁÉÍÓÚüÜñÑ\s.,;:!¿?\-()/]/g,
+}
+
+export function sanitize(value, filter) {
+  if (!filter || filter === 'none') return value
+  const regex = FILTER_REGEX[filter]
+  if (!regex) return value
+  return value.replace(regex, '')
+}
+
 export function validarLongitud(valor, maximo, campoLabel) {
   if (valor && valor.length > maximo) {
     return `${campoLabel} debe tener máximo ${maximo} caracteres`

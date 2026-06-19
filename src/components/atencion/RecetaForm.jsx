@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button } from '../ui/Button'
+import { sanitize } from '../../lib/validaciones'
 import { MedicamentoModal } from './MedicamentoModal'
 import { usePermisos } from '../../hooks/usePermisos'
 
@@ -64,7 +65,7 @@ export function RecetaForm({ onFinalizar, saving, error }) {
         <label className="block text-xs font-medium text-[#7A6555] mb-1.5">Diagnóstico *</label>
         <textarea
           value={diagnostico}
-          onChange={(e) => setDiagnostico(e.target.value)}
+          onChange={(e) => setDiagnostico(sanitize(e.target.value, 'text'))}
           placeholder="Describe el diagnóstico del paciente"
           rows={3}
           disabled={!puedeEscribirReceta}
@@ -77,7 +78,7 @@ export function RecetaForm({ onFinalizar, saving, error }) {
         <label className="block text-xs font-medium text-[#7A6555] mb-1.5">Observaciones</label>
         <textarea
           value={observaciones}
-          onChange={(e) => setObservaciones(e.target.value)}
+          onChange={(e) => setObservaciones(sanitize(e.target.value, 'text'))}
           placeholder="Notas adicionales (opcional)"
           rows={2}
           disabled={!puedeEscribirReceta}

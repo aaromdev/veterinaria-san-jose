@@ -28,6 +28,7 @@ export function FormCliente({ data, onChange, onSubmit, errors }) {
         onChange={handleChange('numero_documento')}
         error={errors.numero_documento}
         maxLength={LIMITES.CLIENTE_NUMERO_DOCUMENTO}
+        filter="alphanumeric"
       />
       <div className="grid grid-cols-2 gap-4">
         <Input
@@ -37,6 +38,7 @@ export function FormCliente({ data, onChange, onSubmit, errors }) {
           onChange={handleChange('nombre')}
           error={errors.nombre}
           maxLength={LIMITES.CLIENTE_NOMBRE}
+          filter="letters"
         />
         <Input
           label="Apellido"
@@ -45,6 +47,7 @@ export function FormCliente({ data, onChange, onSubmit, errors }) {
           onChange={handleChange('apellido')}
           error={errors.apellido}
           maxLength={LIMITES.CLIENTE_APELLIDO}
+          filter="letters"
         />
       </div>
       <Input
@@ -55,6 +58,7 @@ export function FormCliente({ data, onChange, onSubmit, errors }) {
         onChange={handleChange('telefono')}
         error={errors.telefono}
         maxLength={LIMITES.CLIENTE_TELEFONO}
+        filter="digits"
       />
       <Input
         label="Email"

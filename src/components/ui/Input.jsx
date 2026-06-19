@@ -1,9 +1,17 @@
 import { useState } from 'react'
+import { sanitize } from '../../lib/validaciones'
 
-export function Input({ label, error, type = 'text', className = '', ...props }) {
+export function Input({ label, error, type = 'text', className = '', filter, ...props }) {
   const [show, setShow] = useState(false)
   const isPassword = type === 'password'
   const inputType = isPassword ? (show ? 'text' : 'password') : type
+
+  const handleChange = (e) => {
+    if (filter && filter !== 'none') {
+      e.target.value = sanitize(e.target.value, filter)
+    }
+    props.onChange?.(e)
+  }
 
   return (
     <div className="space-y-1">
@@ -17,6 +25,7 @@ export function Input({ label, error, type = 'text', className = '', ...props })
             error ? 'border-[#B91C1C]' : 'border-[#E8DDD0]'
           } ${className}`}
           {...props}
+          onChange={handleChange}
         />
         {isPassword && (
           <button

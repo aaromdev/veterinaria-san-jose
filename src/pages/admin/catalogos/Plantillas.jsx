@@ -214,7 +214,7 @@ export function Plantillas() {
           <Input label="Hora inicio" type="time" value={form.hora_inicio} onChange={handleChange('hora_inicio')} error={errors.hora_inicio} />
           <Input label="Hora fin" type="time" value={form.hora_fin} onChange={handleChange('hora_fin')} error={errors.hora_fin} />
         </div>
-        <Input label="Intervalo (min)" type="number" min="1" value={form.intervalo_minutos} onChange={handleChange('intervalo_minutos')} error={errors.intervalo_minutos} placeholder="30" />
+        <Input label="Intervalo (min)" type="number" min="1" value={form.intervalo_minutos} onChange={handleChange('intervalo_minutos')} error={errors.intervalo_minutos} placeholder="30" filter="digits" />
       </CatalogoModal>
     </CatalogoLayout>
   )

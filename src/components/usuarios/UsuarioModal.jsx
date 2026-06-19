@@ -82,6 +82,7 @@ export function UsuarioModal({ open, onClose, titulo, form, setForm, onGuardar, 
                   onChange={handleChange('nombre')}
                   required
                   maxLength={LIMITES.PERSONAL_NOMBRE}
+                  filter="letters"
                 />
                 {esCliente && (
                   <Input
@@ -91,6 +92,7 @@ export function UsuarioModal({ open, onClose, titulo, form, setForm, onGuardar, 
                     onChange={handleChange('apellido')}
                     required
                     maxLength={LIMITES.CLIENTE_APELLIDO}
+                    filter="letters"
                   />
                 )}
               </div>
@@ -104,6 +106,7 @@ export function UsuarioModal({ open, onClose, titulo, form, setForm, onGuardar, 
                   onChange={handleChange('telefono')}
                   required
                   maxLength={LIMITES.PERSONAL_TELEFONO}
+                  filter="digits"
                 />
                 {!esCliente && (
                   <Select
@@ -130,6 +133,7 @@ export function UsuarioModal({ open, onClose, titulo, form, setForm, onGuardar, 
                     value={form.numero_documento}
                     onChange={handleChange('numero_documento')}
                     maxLength={LIMITES.CLIENTE_NUMERO_DOCUMENTO}
+                    filter="alphanumeric"
                   />
                 </div>
               )}

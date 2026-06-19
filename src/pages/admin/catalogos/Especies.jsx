@@ -255,11 +255,12 @@ export function Especies() {
           value={form.nombre}
           onChange={(e) => {
             setForm({ ...form, nombre: e.target.value })
-            setErrors({}) // limpiar error al escribir
+            setErrors({})
           }}
           error={errors.nombre}
           placeholder="Ej: Canino"
           maxLength={LIMITES.ESPECIE_NOMBRE}
+          filter="letters"
         />
       </CatalogoModal>
 
@@ -277,11 +278,12 @@ export function Especies() {
           value={razaNombre}
           onChange={(e) => {
             setRazaNombre(e.target.value)
-            setRazaError('') // limpiar error al escribir
+            setRazaError('')
           }}
           error={razaError}
           placeholder="Ej: Labrador Retriever"
           maxLength={LIMITES.RAZA_NOMBRE}
+          filter="letters"
         />
       </CatalogoModal>
     </CatalogoLayout>

@@ -49,12 +49,12 @@ export function MedicamentoModal({ open, onClose, onAgregar }) {
           </div>
         </div>
 
-        <Input label="Nombre del medicamento" value={form.nombre} onChange={handleChange('nombre')} error={errors.nombre} placeholder="Ej: Amoxicilina" maxLength={LIMITES.MEDICAMENTO_NOMBRE} />
+        <Input label="Nombre del medicamento" value={form.nombre} onChange={handleChange('nombre')} error={errors.nombre} placeholder="Ej: Amoxicilina" maxLength={LIMITES.MEDICAMENTO_NOMBRE} filter="alphanumeric" />
         <div className="mt-4">
-          <Input label="Dosis" value={form.dosis} onChange={handleChange('dosis')} error={errors.dosis} placeholder="Ej: 500mg cada 12h" maxLength={LIMITES.MEDICAMENTO_DOSIS} />
+          <Input label="Dosis" value={form.dosis} onChange={handleChange('dosis')} error={errors.dosis} placeholder="Ej: 500mg cada 12h" maxLength={LIMITES.MEDICAMENTO_DOSIS} filter="dosis" />
         </div>
         <div className="mt-4">
-          <Input label="Indicaciones" value={form.indicaciones} onChange={handleChange('indicaciones')} placeholder="Ej: Tomar después de comer" />
+          <Input label="Indicaciones" value={form.indicaciones} onChange={handleChange('indicaciones')} placeholder="Ej: Tomar después de comer" filter="text" />
         </div>
 
         <div className="flex gap-3 mt-6">

@@ -23,6 +23,7 @@ export function FormMascota({ data, onChange, onSubmit, errors, submitLabel = 'F
         onChange={handleChange('nombre')}
         error={errors.nombre}
         maxLength={LIMITES.MASCOTA_NOMBRE}
+        filter="letters"
       />
       <Select
         label="Especie"

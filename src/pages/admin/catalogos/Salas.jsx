@@ -167,7 +167,7 @@ export function Salas() {
         onGuardar={guardar}
         cargando={saving}
       >
-        <Input label="Nombre" value={form.nombre} onChange={handleChange('nombre')} error={errors.nombre} placeholder="Ej: Consultorio 1" maxLength={LIMITES.SALA_NOMBRE} />
+        <Input label="Nombre" value={form.nombre} onChange={handleChange('nombre')} error={errors.nombre} placeholder="Ej: Consultorio 1" maxLength={LIMITES.SALA_NOMBRE} filter="alphanumeric" />
         <Select
           label="Categoría"
           placeholder="Seleccionar categoría"
@@ -176,7 +176,7 @@ export function Salas() {
           onChange={handleChange('id_categoria')}
           error={errors.id_categoria}
         />
-        <Input label="Capacidad" type="number" min="1" value={form.capacidad} onChange={handleChange('capacidad')} error={errors.capacidad} placeholder="1" />
+        <Input label="Capacidad" type="number" min="1" value={form.capacidad} onChange={handleChange('capacidad')} error={errors.capacidad} placeholder="1" filter="digits" />
       </CatalogoModal>
     </CatalogoLayout>
   )

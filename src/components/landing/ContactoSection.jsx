@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useReveal } from '../../hooks/useReveal'
 import { IconMapPin, IconPhone, IconMail } from '../ui/icons'
+import { sanitize } from '../../lib/validaciones'
 import contactSrc from '../../assets/contact.png'
 
 const INITIAL = { nombre: '', email: '', mensaje: '' }
@@ -30,7 +31,12 @@ export function ContactoSection() {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
+    const clean = name === 'nombre'
+      ? sanitize(value, 'letters')
+      : name === 'mensaje'
+        ? sanitize(value, 'text')
+        : value
+    setForm((prev) => ({ ...prev, [name]: clean }))
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }))
   }
 
