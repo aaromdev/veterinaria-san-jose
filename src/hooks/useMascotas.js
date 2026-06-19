@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { formatearErrorSupabase } from '../lib/validaciones'
 
 export function useMascotas() {
   const [mascotas, setMascotas] = useState([])
@@ -73,12 +74,12 @@ export function useMascotas() {
         raza ( id, nombre )
       `)
       .single()
-    if (mascotaError) throw mascotaError
+    if (mascotaError) throw new Error(formatearErrorSupabase(mascotaError))
 
     const { error: historiaError } = await supabase
       .from('historia_clinica')
       .insert({ id_mascota: mascota.id })
-    if (historiaError) throw historiaError
+    if (historiaError) throw new Error(formatearErrorSupabase(historiaError))
 
     setMascotas((prev) => [...prev, mascota].sort((a, b) => a.nombre.localeCompare(b.nombre)))
     return mascota
@@ -122,7 +123,7 @@ export function useMascotas() {
         raza ( id, nombre )
       `)
       .single()
-    if (error) throw error
+    if (error) throw new Error(formatearErrorSupabase(error))
     setMascotas((prev) => prev.map((m) => (m.id === id ? data : m)))
     return data
   }, [])
@@ -141,7 +142,7 @@ export function useMascotas() {
       .from('mascota')
       .update({ is_active: false })
       .eq('id', id)
-    if (error) throw error
+    if (error) throw new Error(formatearErrorSupabase(error))
     setMascotas((prev) => prev.filter((m) => m.id !== id))
   }, [])
 

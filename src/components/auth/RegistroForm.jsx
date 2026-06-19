@@ -5,6 +5,7 @@ import { StepperHeader } from '../registro/StepperHeader'
 import { FormCliente } from '../registro/FormCliente'
 import { FormMascota } from '../registro/FormMascota'
 import { useReveal } from '../../hooks/useReveal'
+import { LIMITES, validarLongitud } from '../../lib/validaciones'
 
 const clienteVacio = {
   id_tipo_documento: '',
@@ -28,10 +29,20 @@ function validarCliente(d) {
   const e = {}
   if (!d.id_tipo_documento) e.id_tipo_documento = 'Selecciona un tipo de documento'
   if (!d.numero_documento.trim()) e.numero_documento = 'Campo obligatorio'
+  let err = validarLongitud(d.numero_documento, LIMITES.CLIENTE_NUMERO_DOCUMENTO, 'El número de documento')
+  if (err) e.numero_documento = err
   if (!d.nombre.trim()) e.nombre = 'Campo obligatorio'
+  err = validarLongitud(d.nombre, LIMITES.CLIENTE_NOMBRE, 'El nombre')
+  if (err) e.nombre = err
   if (!d.apellido.trim()) e.apellido = 'Campo obligatorio'
+  err = validarLongitud(d.apellido, LIMITES.CLIENTE_APELLIDO, 'El apellido')
+  if (err) e.apellido = err
   if (!/^\d{9}$/.test(d.telefono)) e.telefono = 'Debe tener 9 digitos'
+  err = validarLongitud(d.telefono, LIMITES.CLIENTE_TELEFONO, 'El teléfono')
+  if (err) e.telefono = err
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) e.email = 'Email invalido'
+  err = validarLongitud(d.email, LIMITES.EMAIL, 'El email')
+  if (err) e.email = err
   if (d.password.length < 6) e.password = 'Minimo 6 caracteres'
   if (d.password !== d.confirmarPassword) e.confirmarPassword = 'Las contrasenas no coinciden'
   return e
@@ -40,6 +51,8 @@ function validarCliente(d) {
 function validarMascota(d) {
   const e = {}
   if (!d.nombre.trim()) e.nombre = 'Campo obligatorio'
+  const errLong = validarLongitud(d.nombre, LIMITES.MASCOTA_NOMBRE, 'El nombre')
+  if (errLong) e.nombre = errLong
   if (!d.id_especie) e.id_especie = 'Selecciona una especie'
   if (!d.fecha_nacimiento) {
     e.fecha_nacimiento = 'Campo obligatorio'

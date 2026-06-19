@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { formatearErrorSupabase } from '../lib/validaciones'
 
 export function useEspeciesAll() {
   const [especies, setEspecies] = useState([])
@@ -40,7 +41,7 @@ export function useEspeciesAll() {
       .insert({ nombre: datos.nombre.trim() })
       .select()
       .single()
-    if (error) throw error
+    if (error) throw new Error(formatearErrorSupabase(error))
     setEspecies((prev) => [...prev, data].sort((a, b) => a.nombre.localeCompare(b.nombre)))
   }, [existeNombre])
 
@@ -54,7 +55,7 @@ export function useEspeciesAll() {
       .eq('id', id)
       .select()
       .single()
-    if (error) throw error
+    if (error) throw new Error(formatearErrorSupabase(error))
     setEspecies((prev) => prev.map((e) => (e.id === id ? data : e)))
   }, [existeNombre])
 
@@ -78,7 +79,7 @@ export function useEspeciesAll() {
       .eq('id', id)
       .select()
       .single()
-    if (error) throw error
+    if (error) throw new Error(formatearErrorSupabase(error))
     setEspecies((prev) => prev.map((e) => (e.id === id ? data : e)))
   }, [especies])
 

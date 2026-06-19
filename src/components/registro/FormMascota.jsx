@@ -4,6 +4,7 @@ import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Select } from '../ui/Select'
 import { SelectRazaFiltrada } from './SelectRazaFiltrada'
+import { LIMITES } from '../../lib/validaciones'
 
 const hoyISO = () => new Date().toISOString().split('T')[0]
 
@@ -21,6 +22,7 @@ export function FormMascota({ data, onChange, onSubmit, errors, submitLabel = 'F
         value={data.nombre}
         onChange={handleChange('nombre')}
         error={errors.nombre}
+        maxLength={LIMITES.MASCOTA_NOMBRE}
       />
       <Select
         label="Especie"

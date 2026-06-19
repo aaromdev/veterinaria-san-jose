@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
+import { LIMITES, validarLongitud } from '../../lib/validaciones'
 
 const VACIO = { nombre: '', dosis: '', indicaciones: '' }
 
@@ -14,6 +15,10 @@ export function MedicamentoModal({ open, onClose, onAgregar }) {
   const handleAgregar = () => {
     const e = {}
     if (!form.nombre.trim()) e.nombre = 'Requerido'
+    let err = validarLongitud(form.nombre, LIMITES.MEDICAMENTO_NOMBRE, 'El nombre')
+    if (err) e.nombre = err
+    err = validarLongitud(form.dosis, LIMITES.MEDICAMENTO_DOSIS, 'La dosis')
+    if (err) e.dosis = err
     setErrors(e)
     if (Object.keys(e).length > 0) return
     onAgregar({ ...form })
@@ -44,9 +49,9 @@ export function MedicamentoModal({ open, onClose, onAgregar }) {
           </div>
         </div>
 
-        <Input label="Nombre del medicamento" value={form.nombre} onChange={handleChange('nombre')} error={errors.nombre} placeholder="Ej: Amoxicilina" />
+        <Input label="Nombre del medicamento" value={form.nombre} onChange={handleChange('nombre')} error={errors.nombre} placeholder="Ej: Amoxicilina" maxLength={LIMITES.MEDICAMENTO_NOMBRE} />
         <div className="mt-4">
-          <Input label="Dosis" value={form.dosis} onChange={handleChange('dosis')} placeholder="Ej: 500mg cada 12h" />
+          <Input label="Dosis" value={form.dosis} onChange={handleChange('dosis')} error={errors.dosis} placeholder="Ej: 500mg cada 12h" maxLength={LIMITES.MEDICAMENTO_DOSIS} />
         </div>
         <div className="mt-4">
           <Input label="Indicaciones" value={form.indicaciones} onChange={handleChange('indicaciones')} placeholder="Ej: Tomar después de comer" />

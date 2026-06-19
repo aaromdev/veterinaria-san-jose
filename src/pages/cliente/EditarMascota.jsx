@@ -3,10 +3,13 @@ import { useNavigate, useParams, Link } from 'react-router-dom'
 import { FormMascota } from '../../components/registro/FormMascota'
 import { useMascota } from '../../hooks/useMascota'
 import { useMascotas } from '../../hooks/useMascotas'
+import { LIMITES, validarLongitud } from '../../lib/validaciones'
 
 function validar(d) {
   const e = {}
   if (!d.nombre.trim()) e.nombre = 'Campo obligatorio'
+  const errLong = validarLongitud(d.nombre, LIMITES.MASCOTA_NOMBRE, 'El nombre')
+  if (errLong) e.nombre = errLong
   if (!d.id_especie) e.id_especie = 'Selecciona una especie'
   if (!d.fecha_nacimiento) {
     e.fecha_nacimiento = 'Campo obligatorio'

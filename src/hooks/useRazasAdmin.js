@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { formatearErrorSupabase } from '../lib/validaciones'
 
 export function useRazasAdmin(idEspecie) {
   const [razas, setRazas] = useState([])
@@ -33,7 +34,7 @@ export function useRazasAdmin(idEspecie) {
       .single()
     if (error) {
       if (error.code === '23505') throw new Error('Ya existe una raza con ese nombre en esta especie')
-      throw error
+      throw new Error(formatearErrorSupabase(error))
     }
     setRazas((prev) => [...prev, data].sort((a, b) => a.nombre.localeCompare(b.nombre)))
   }, [idEspecie])
@@ -58,7 +59,7 @@ export function useRazasAdmin(idEspecie) {
       .eq('id', id)
       .select()
       .single()
-    if (error) throw error
+    if (error) throw new Error(formatearErrorSupabase(error))
     setRazas((prev) => prev.map((r) => (r.id === id ? data : r)))
   }, [razas])
 

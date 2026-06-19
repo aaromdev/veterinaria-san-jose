@@ -7,6 +7,7 @@ import { BarraBusqueda } from '../../../components/ui/BarraBusqueda'
 import { Input } from '../../../components/ui/Input'
 import { useEspeciesAll } from '../../../hooks/useEspeciesAll'
 import { useRazasAdmin } from '../../../hooks/useRazasAdmin'
+import { LIMITES, validarLongitud } from '../../../lib/validaciones'
 
 function EditBtn({ onClick }) {
   return (
@@ -63,6 +64,12 @@ export function Especies() {
       return
     }
 
+    const errLong = validarLongitud(form.nombre, LIMITES.ESPECIE_NOMBRE, 'El nombre')
+    if (errLong) {
+      setErrors({ nombre: errLong })
+      return
+    }
+
     const yaExiste = especies.some(e =>
       e.nombre.toLowerCase().trim() === form.nombre.toLowerCase().trim() &&
       (!modal.editando || e.id !== modal.editando.id)
@@ -81,7 +88,6 @@ export function Especies() {
       }
       setModal({ open: false, editando: null })
     } catch (err) {
-      // Muestra el error de duplicado (u otro) directamente en el campo
       setErrors({ nombre: err.message || 'Error al guardar' })
     }
     setSaving(false)
@@ -102,7 +108,13 @@ export function Especies() {
       setRazaError('El nombre es requerido')
       return
     }
-    // Verificar duplicado en razas de la especie expandida
+
+    const errLong = validarLongitud(razaNombre, LIMITES.RAZA_NOMBRE, 'El nombre')
+    if (errLong) {
+      setRazaError(errLong)
+      return
+    }
+
     const yaExiste = razas.some(
       (r) => r.nombre.trim().toLowerCase() === razaNombre.trim().toLowerCase()
     )
@@ -247,6 +259,7 @@ export function Especies() {
           }}
           error={errors.nombre}
           placeholder="Ej: Canino"
+          maxLength={LIMITES.ESPECIE_NOMBRE}
         />
       </CatalogoModal>
 
@@ -268,6 +281,7 @@ export function Especies() {
           }}
           error={razaError}
           placeholder="Ej: Labrador Retriever"
+          maxLength={LIMITES.RAZA_NOMBRE}
         />
       </CatalogoModal>
     </CatalogoLayout>

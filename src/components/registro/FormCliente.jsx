@@ -3,6 +3,7 @@ import { useTipoDocumento } from '../../hooks/useTipoDocumento'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Select } from '../ui/Select'
+import { LIMITES } from '../../lib/validaciones'
 
 export function FormCliente({ data, onChange, onSubmit, errors }) {
   const { tipos } = useTipoDocumento()
@@ -26,6 +27,7 @@ export function FormCliente({ data, onChange, onSubmit, errors }) {
         value={data.numero_documento}
         onChange={handleChange('numero_documento')}
         error={errors.numero_documento}
+        maxLength={LIMITES.CLIENTE_NUMERO_DOCUMENTO}
       />
       <div className="grid grid-cols-2 gap-4">
         <Input
@@ -34,6 +36,7 @@ export function FormCliente({ data, onChange, onSubmit, errors }) {
           value={data.nombre}
           onChange={handleChange('nombre')}
           error={errors.nombre}
+          maxLength={LIMITES.CLIENTE_NOMBRE}
         />
         <Input
           label="Apellido"
@@ -41,6 +44,7 @@ export function FormCliente({ data, onChange, onSubmit, errors }) {
           value={data.apellido}
           onChange={handleChange('apellido')}
           error={errors.apellido}
+          maxLength={LIMITES.CLIENTE_APELLIDO}
         />
       </div>
       <Input
@@ -50,7 +54,7 @@ export function FormCliente({ data, onChange, onSubmit, errors }) {
         value={data.telefono}
         onChange={handleChange('telefono')}
         error={errors.telefono}
-        maxLength={9}
+        maxLength={LIMITES.CLIENTE_TELEFONO}
       />
       <Input
         label="Email"

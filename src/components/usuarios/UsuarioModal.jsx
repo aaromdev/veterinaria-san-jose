@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Select } from '../ui/Select'
+import { LIMITES } from '../../lib/validaciones'
 
 const ROLES = [
   { value: 'ADMINISTRADOR', label: 'Administrador' },
@@ -80,6 +81,7 @@ export function UsuarioModal({ open, onClose, titulo, form, setForm, onGuardar, 
                   value={form.nombre}
                   onChange={handleChange('nombre')}
                   required
+                  maxLength={LIMITES.PERSONAL_NOMBRE}
                 />
                 {esCliente && (
                   <Input
@@ -88,6 +90,7 @@ export function UsuarioModal({ open, onClose, titulo, form, setForm, onGuardar, 
                     value={form.apellido}
                     onChange={handleChange('apellido')}
                     required
+                    maxLength={LIMITES.CLIENTE_APELLIDO}
                   />
                 )}
               </div>
@@ -100,6 +103,7 @@ export function UsuarioModal({ open, onClose, titulo, form, setForm, onGuardar, 
                   value={form.telefono}
                   onChange={handleChange('telefono')}
                   required
+                  maxLength={LIMITES.PERSONAL_TELEFONO}
                 />
                 {!esCliente && (
                   <Select
@@ -125,6 +129,7 @@ export function UsuarioModal({ open, onClose, titulo, form, setForm, onGuardar, 
                     placeholder="12345678"
                     value={form.numero_documento}
                     onChange={handleChange('numero_documento')}
+                    maxLength={LIMITES.CLIENTE_NUMERO_DOCUMENTO}
                   />
                 </div>
               )}

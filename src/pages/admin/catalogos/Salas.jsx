@@ -8,12 +8,15 @@ import { Input } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
 import { useSalas } from '../../../hooks/useSalas'
 import { useCategoriaSala } from '../../../hooks/useCategoriaSala'
+import { LIMITES, validarLongitud } from '../../../lib/validaciones'
 
 const FORM_VACIO = { nombre: '', capacidad: '', id_categoria: '' }
 
 function validar(f) {
   const e = {}
   if (!f.nombre.trim()) e.nombre = 'Requerido'
+  const errLong = validarLongitud(f.nombre, LIMITES.SALA_NOMBRE, 'El nombre')
+  if (errLong) e.nombre = errLong
   if (!f.capacidad || isNaN(f.capacidad) || parseInt(f.capacidad) <= 0)
     e.capacidad = 'Ingresa una capacidad válida'
   if (!f.id_categoria) e.id_categoria = 'Selecciona una categoría'
@@ -164,7 +167,7 @@ export function Salas() {
         onGuardar={guardar}
         cargando={saving}
       >
-        <Input label="Nombre" value={form.nombre} onChange={handleChange('nombre')} error={errors.nombre} placeholder="Ej: Consultorio 1" />
+        <Input label="Nombre" value={form.nombre} onChange={handleChange('nombre')} error={errors.nombre} placeholder="Ej: Consultorio 1" maxLength={LIMITES.SALA_NOMBRE} />
         <Select
           label="Categoría"
           placeholder="Seleccionar categoría"

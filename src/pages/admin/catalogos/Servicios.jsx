@@ -8,6 +8,7 @@ import { Input } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
 import { useServiciosAll } from '../../../hooks/useServiciosAll'
 import { useCategoriaSala } from '../../../hooks/useCategoriaSala'
+import { LIMITES, validarLongitud } from '../../../lib/validaciones'
 
 const FORM_VACIO = {
   nombre: '',
@@ -20,6 +21,8 @@ const FORM_VACIO = {
 function validar(f) {
   const e = {}
   if (!f.nombre.trim()) e.nombre = 'Requerido'
+  const errLong = validarLongitud(f.nombre, LIMITES.SERVICIO_NOMBRE, 'El nombre')
+  if (errLong) e.nombre = errLong
   if (!f.duracion_minutos || isNaN(f.duracion_minutos) || parseInt(f.duracion_minutos) <= 0)
     e.duracion_minutos = 'Ingresa una duración válida en minutos'
   if (!f.precio || isNaN(f.precio) || parseFloat(f.precio) <= 0)
@@ -182,7 +185,7 @@ export function Servicios() {
         onGuardar={guardar}
         cargando={saving}
       >
-        <Input label="Nombre" value={form.nombre} onChange={handleChange('nombre')} error={errors.nombre} placeholder="Ej: Consulta general" />
+        <Input label="Nombre" value={form.nombre} onChange={handleChange('nombre')} error={errors.nombre} placeholder="Ej: Consulta general" maxLength={LIMITES.SERVICIO_NOMBRE} />
         <Input label="Descripción (opcional)" value={form.descripcion} onChange={handleChange('descripcion')} placeholder="Breve descripción del servicio" />
         <Select
           label="Categoría"
