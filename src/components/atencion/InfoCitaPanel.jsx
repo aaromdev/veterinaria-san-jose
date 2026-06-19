@@ -41,7 +41,7 @@ export function InfoCitaPanel({
         <InfoRow label="Teléfono" value={cita?.cliente?.telefono} />
       </div>
 
-      {cita?.estado === 'PROGRAMADA' && (
+      {cita?.estado === 'PROGRAMADA' && can('pago.registrar') && (
         <div className="space-y-2 pt-2 border-t border-[#E8DDD0]">
           <Button
             className="w-full"
