@@ -6,6 +6,7 @@ import logoSrc from '../../assets/logo.png'
 const navItems = [
   { label: 'Mis mascotas', path: '/cliente/mascotas' },
   { label: 'Mis citas', path: '/cliente/citas' },
+  { label: 'Mi perfil', path: '/cliente/perfil' },
 ]
 
 export function NavbarCliente() {

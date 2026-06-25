@@ -7,7 +7,6 @@ import { getClienteId } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
-import { Select } from '../../components/ui/Select'
 import { ServicioSelector } from '../../components/citas/ServicioSelector'
 import { HuecoPicker } from '../../components/citas/HuecoPicker'
 import { ResumenCita } from '../../components/citas/ResumenCita'
@@ -27,10 +26,35 @@ function addDays(date, days) {
 }
 
 const STEPS = [
-  { num: 1, label: 'Mascota y servicio' },
+  { num: 1, label: 'Mascotas y servicio' },
   { num: 2, label: 'Elegir horario' },
   { num: 3, label: 'Confirmar' },
 ]
+
+function MascotaCheckbox({ mascota, checked, onChange }) {
+  return (
+    <label
+      className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all duration-200 ${
+        checked
+          ? 'border-[#C2570F] bg-[#FFF3EB] ring-2 ring-[#C2570F]/20'
+          : 'border-[#E8DDD0] bg-white hover:border-[#C2570F]/30 hover:bg-[#FAF7F2]'
+      }`}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        className="w-4 h-4 rounded border-[#E8DDD0] text-[#C2570F] focus:ring-[#C2570F] accent-[#C2570F] shrink-0"
+      />
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-[#2C1A0E] truncate">{mascota.nombre}</p>
+        {mascota.especie_mascota && (
+          <p className="text-xs text-[#7A6555]">{mascota.especie_mascota.nombre}</p>
+        )}
+      </div>
+    </label>
+  )
+}
 
 export function NuevaCita() {
   const navigate = useNavigate()
@@ -38,12 +62,13 @@ export function NuevaCita() {
   const [idCliente, setIdCliente] = useState(null)
   const [clienteLoading, setClienteLoading] = useState(true)
   const [step, setStep] = useState(1)
-  const [idMascota, setIdMascota] = useState('')
+  const [mascotasIds, setMascotasIds] = useState(new Set())
   const [idServicio, setIdServicio] = useState('')
   const [fecha, setFecha] = useState(() => getLocalDateString())
-  const [huecoSeleccionado, setHuecoSeleccionado] = useState(null)
+  const [huecosIds, setHuecosIds] = useState([])
   const [confirmando, setConfirmando] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [successData, setSuccessData] = useState({ count: 0, mascotas: [] })
   const [countdown, setCountdown] = useState(5)
   const [error, setError] = useState(null)
 
@@ -62,23 +87,41 @@ export function NuevaCita() {
     [mascotas]
   )
 
-  const mascotaOptions = useMemo(
-    () => mascotasActivas.map((m) => ({ value: m.id, label: m.nombre })),
-    [mascotasActivas]
-  )
-
   const servicioSeleccionado = useMemo(
     () => servicios.find((s) => s.id === idServicio),
     [servicios, idServicio]
   )
 
-  const mascotaSeleccionada = useMemo(
-    () => mascotasActivas.find((m) => m.id === idMascota),
-    [mascotasActivas, idMascota]
+  const mascotasSeleccionadas = useMemo(
+    () => mascotasActivas.filter((m) => mascotasIds.has(m.id)),
+    [mascotasActivas, mascotasIds]
   )
 
-  const canNextStep1 = idMascota && idServicio
-  const canNextStep2 = !!huecoSeleccionado
+  const huecosSeleccionados = useMemo(
+    () => huecos.filter((h) => huecosIds.includes(h.id)),
+    [huecos, huecosIds]
+  )
+
+  const maxHuecos = mascotasIds.size * 2
+  const canNextStep1 = mascotasIds.size > 0 && idServicio
+  const canNextStep2 = huecosIds.length > 0 && huecosIds.length <= maxHuecos
+
+  const toggleMascota = useCallback((id) => {
+    setMascotasIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }, [])
+
+  const clearSelections = useCallback(() => {
+    setHuecosIds([])
+    setError(null)
+  }, [])
 
   useEffect(() => {
     if (!success) return
@@ -93,18 +136,24 @@ export function NuevaCita() {
   const handleConfirmar = useCallback(async () => {
     setConfirmando(true)
     setError(null)
-    const { error } = await supabase.rpc('reservar_cita', {
+    const mascotasArray = [...mascotasIds]
+    const { data, error: rpcError } = await supabase.rpc('reservar_cita_multi', {
       p_id_cliente: idCliente,
-      p_id_mascota: idMascota,
-      p_id_hueco: huecoSeleccionado.id,
+      p_id_servicio: idServicio,
+      p_mascotas: mascotasArray,
+      p_id_huecos: huecosIds,
     })
     setConfirmando(false)
-    if (error) {
-      setError(error.message)
+    if (rpcError) {
+      setError(rpcError.message)
     } else {
+      setSuccessData({
+        count: data?.length || 0,
+        mascotas: mascotasSeleccionadas.map((m) => m.nombre),
+      })
       setSuccess(true)
     }
-  }, [idCliente, idMascota, huecoSeleccionado])
+  }, [idCliente, idServicio, mascotasIds, huecosIds, mascotasSeleccionadas])
 
   if (clienteLoading) {
     return (
@@ -127,7 +176,14 @@ export function NuevaCita() {
               <path d="M20 6L9 17L4 12" />
             </svg>
           </div>
-          <h2 className="text-lg font-semibold text-[#2C1A0E] mb-1">¡Cita reservada con éxito!</h2>
+          <h2 className="text-lg font-semibold text-[#2C1A0E] mb-1">
+            ¡{successData.count} cita{successData.count !== 1 ? 's' : ''} reservada{successData.count !== 1 ? 's' : ''} con éxito!
+          </h2>
+          {successData.mascotas.length > 0 && (
+            <p className="text-sm text-[#7A6555] mb-3">
+              Para: {successData.mascotas.join(', ')}
+            </p>
+          )}
           <p className="text-sm text-[#7A6555] max-w-xs">
             Serás redirigido a tus citas en {countdown} segundo{countdown !== 1 ? 's' : ''}.
           </p>
@@ -145,20 +201,31 @@ export function NuevaCita() {
       {step === 1 && (
         <div className="space-y-6">
           <div>
-            <h3 className="text-sm font-semibold text-[#2C1A0E] mb-3">Selecciona tu mascota</h3>
+            <h3 className="text-sm font-semibold text-[#2C1A0E] mb-3">
+              Selecciona tus mascotas
+              {mascotasIds.size > 0 && (
+                <span className="ml-2 text-xs font-normal text-[#7A6555]">
+                  ({mascotasIds.size} seleccionada{mascotasIds.size !== 1 ? 's' : ''})
+                </span>
+              )}
+            </h3>
             {loadingMascotas ? (
               <p className="text-sm text-[#7A6555]">Cargando mascotas...</p>
-            ) : mascotaOptions.length === 0 ? (
+            ) : mascotasActivas.length === 0 ? (
               <p className="text-sm text-[#7A6555]">
                 No tienes mascotas registradas. Primero registra una.
               </p>
             ) : (
-              <Select
-                placeholder="Seleccionar mascota"
-                options={mascotaOptions}
-                value={idMascota}
-                onChange={(e) => setIdMascota(e.target.value)}
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {mascotasActivas.map((m) => (
+                  <MascotaCheckbox
+                    key={m.id}
+                    mascota={m}
+                    checked={mascotasIds.has(m.id)}
+                    onChange={() => toggleMascota(m.id)}
+                  />
+                ))}
+              </div>
             )}
           </div>
 
@@ -185,60 +252,64 @@ export function NuevaCita() {
 
       {step === 2 && (
         <div className="space-y-6">
-          <div>
-            <h3 className="text-sm font-semibold text-[#2C1A0E] mb-3">Elige un horario disponible</h3>
-
-            <div className="flex items-end gap-3 mb-6">
-              <div className="flex-1">
-                <Input
-                  label="Fecha"
-                  type="date"
-                  value={fecha}
-                  onChange={(e) => { setFecha(e.target.value); setHuecoSeleccionado(null) }}
-                  min={getLocalDateString()}
-                />
-              </div>
-              <Button
-                variant="secondary"
-                className="text-xs px-3 py-2"
-                onClick={() => { setFecha(getLocalDateString()); setHuecoSeleccionado(null) }}
-              >
-                Hoy
-              </Button>
-              <Button
-                variant="secondary"
-                className="text-xs px-3 py-2"
-                onClick={() => { setFecha(getLocalDateString(addDays(new Date(), 1))); setHuecoSeleccionado(null) }}
-              >
-                Mañana
-              </Button>
-              <Button
-                variant="secondary"
-                className="text-xs px-3 py-2"
-                onClick={() => { setFecha(getLocalDateString(addDays(new Date(), 3))); setHuecoSeleccionado(null) }}
-              >
-                +3 días
-              </Button>
-            </div>
-
-            {loadingHuecos ? (
-              <p className="text-sm text-[#7A6555]">Cargando horarios...</p>
-            ) : huecos.length === 0 ? (
-              <p className="text-sm text-[#7A6555]">
-                No hay horarios disponibles para este servicio en la fecha seleccionada.
-                Prueba con otro día o servicio.
-              </p>
-            ) : (
-              <HuecoPicker
-                agrupadosPorFecha={agrupadosPorFecha}
-                selected={huecoSeleccionado?.id}
-                onSelect={setHuecoSeleccionado}
-              />
-            )}
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-[#2C1A0E]">Elige horarios disponibles</h3>
+            <span className="text-xs text-[#7A6555] bg-[#FAF7F2] px-2.5 py-1 rounded-full">
+              {mascotasIds.size} mascota{mascotasIds.size !== 1 ? 's' : ''} · max {maxHuecos} hueco{maxHuecos !== 1 ? 's' : ''}
+            </span>
           </div>
 
+          <div className="flex items-end gap-3 mb-6">
+            <div className="flex-1">
+              <Input
+                label="Fecha"
+                type="date"
+                value={fecha}
+                onChange={(e) => { setFecha(e.target.value); clearSelections() }}
+                min={getLocalDateString()}
+              />
+            </div>
+            <Button
+              variant="secondary"
+              className="text-xs px-3 py-2"
+              onClick={() => { setFecha(getLocalDateString()); clearSelections() }}
+            >
+              Hoy
+            </Button>
+            <Button
+              variant="secondary"
+              className="text-xs px-3 py-2"
+              onClick={() => { setFecha(getLocalDateString(addDays(new Date(), 1))); clearSelections() }}
+            >
+              Mañana
+            </Button>
+            <Button
+              variant="secondary"
+              className="text-xs px-3 py-2"
+              onClick={() => { setFecha(getLocalDateString(addDays(new Date(), 3))); clearSelections() }}
+            >
+              +3 días
+            </Button>
+          </div>
+
+          {loadingHuecos ? (
+            <p className="text-sm text-[#7A6555]">Cargando horarios...</p>
+          ) : huecos.length === 0 ? (
+            <p className="text-sm text-[#7A6555]">
+              No hay horarios disponibles para este servicio en la fecha seleccionada.
+              Prueba con otro día o servicio.
+            </p>
+          ) : (
+            <HuecoPicker
+              agrupadosPorFecha={agrupadosPorFecha}
+              selected={huecosIds}
+              onChange={setHuecosIds}
+              maxSeleccion={maxHuecos}
+            />
+          )}
+
           <div className="flex justify-between pt-4">
-            <Button variant="secondary" onClick={() => { setStep(1); setHuecoSeleccionado(null) }}>
+            <Button variant="secondary" onClick={() => { setStep(1); clearSelections() }}>
               Atrás
             </Button>
             <Button onClick={() => setStep(3)} disabled={!canNextStep2}>
@@ -251,9 +322,9 @@ export function NuevaCita() {
       {step === 3 && (
         <div className="space-y-6">
           <ResumenCita
-            mascota={mascotaSeleccionada}
+            mascotas={mascotasSeleccionadas}
             servicio={servicioSeleccionado}
-            hueco={huecoSeleccionado}
+            huecos={huecosSeleccionados}
             onConfirm={handleConfirmar}
             loading={confirmando}
           />
@@ -263,7 +334,7 @@ export function NuevaCita() {
           )}
 
           <div className="flex justify-start">
-            <Button variant="secondary" onClick={() => { setStep(2) }}>
+            <Button variant="secondary" onClick={() => setStep(2)}>
               Atrás
             </Button>
           </div>
@@ -277,7 +348,7 @@ function Header() {
   return (
     <div className="mb-8">
       <h1 className="text-2xl font-bold text-[#2C1A0E]">Reservar cita</h1>
-      <p className="text-sm text-[#7A6555] mt-1">Agenda una consulta para tu mascota</p>
+      <p className="text-sm text-[#7A6555] mt-1">Agenda una consulta para tus mascotas</p>
     </div>
   )
 }

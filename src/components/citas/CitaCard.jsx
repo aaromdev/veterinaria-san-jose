@@ -26,6 +26,13 @@ export function CitaCard({ cita, onCancel }) {
   const hueco = cita?.hueco
   const mascota = cita?.mascota
 
+  const extras = (cita?.cita_hueco || [])
+    .map((ch) => ch.hueco)
+    .filter(Boolean)
+    .sort((a, b) => (a.hora_inicio || '').localeCompare(b.hora_inicio || ''))
+  const horaInicio = extras[0]?.hora_inicio || hueco?.hora_inicio
+  const horaFin = extras[extras.length - 1]?.hora_fin || hueco?.hora_fin
+
   return (
     <div
       className="bg-white border border-[#E8DDD0] rounded-lg p-4 hover:shadow-sm hover:border-[#C2570F]/30 transition-all duration-200 cursor-pointer"
@@ -34,7 +41,7 @@ export function CitaCard({ cita, onCancel }) {
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="text-sm font-semibold text-[#C2570F]">
-            {formatFecha(hueco?.fecha)} — {formatHora(hueco?.hora_inicio)} a {formatHora(hueco?.hora_fin)}
+            {formatFecha(hueco?.fecha)} — {formatHora(horaInicio)} a {formatHora(horaFin)}
           </p>
         </div>
         <Badge estado={cita?.estado} />

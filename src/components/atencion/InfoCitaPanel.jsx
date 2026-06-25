@@ -25,6 +25,13 @@ export function InfoCitaPanel({
 
   const formatHora = (hora) => hora?.slice(0, 5) || '--:--'
 
+  const extras = (cita?.cita_hueco || [])
+    .map((ch) => ch.hueco)
+    .filter(Boolean)
+    .sort((a, b) => (a.hora_inicio || '').localeCompare(b.hora_inicio || ''))
+  const horaInicio = extras[0]?.hora_inicio || cita?.hueco?.hora_inicio
+  const horaFin = extras[extras.length - 1]?.hora_fin || cita?.hueco?.hora_fin
+
   return (
     <div className="bg-white border border-[#E8DDD0] rounded-xl p-5 space-y-4">
       <div className="flex items-center justify-between">
@@ -37,7 +44,7 @@ export function InfoCitaPanel({
         <InfoRow label="Mascota" value={cita?.mascota?.nombre} />
         <InfoRow label="Servicio" value={cita?.hueco?.servicio?.nombre} />
         <InfoRow label="Sala" value={cita?.hueco?.sala?.nombre} />
-        <InfoRow label="Hora" value={`${formatHora(cita?.hueco?.hora_inicio)} - ${formatHora(cita?.hueco?.hora_fin)}`} />
+        <InfoRow label="Hora" value={`${formatHora(horaInicio)} - ${formatHora(horaFin)}`} />
         <InfoRow label="Teléfono" value={cita?.cliente?.telefono} />
       </div>
 

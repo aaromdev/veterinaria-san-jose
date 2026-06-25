@@ -32,13 +32,18 @@ export function useAgenda(fecha) {
         .from('cita')
         .select(`
           id, estado,
-          hueco!inner (
+          hueco!cita_id_hueco_fkey!inner (
             id, fecha, hora_inicio, hora_fin,
             sala!inner ( id, nombre ),
             servicio ( id, nombre )
           ),
           mascota ( id, nombre ),
-          cliente ( id, nombre, apellido, telefono )
+          cliente ( id, nombre, apellido, telefono ),
+          cita_hueco (
+            id_hueco,
+            orden,
+            hueco ( id, hora_inicio, hora_fin )
+          )
         `)
         .eq('hueco.fecha', fecha)
         .in('estado', ['PROGRAMADA', 'EN_ESPERA', 'FINALIZADA'])

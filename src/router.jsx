@@ -13,6 +13,7 @@ const Landing = lazy(() => import('./pages/publico/Landing').then((m) => ({ defa
 const Login = lazy(() => import('./pages/publico/Login').then((m) => ({ default: m.Login })))
 const Registro = lazy(() => import('./pages/publico/Registro').then((m) => ({ default: m.Registro })))
 
+const EditarPerfil = lazy(() => import('./pages/cliente/EditarPerfil').then((m) => ({ default: m.EditarPerfil })))
 const MisMascotas = lazy(() => import('./pages/cliente/MisMascotas').then((m) => ({ default: m.MisMascotas })))
 const NuevaMascota = lazy(() => import('./pages/cliente/NuevaMascota').then((m) => ({ default: m.NuevaMascota })))
 const EditarMascota = lazy(() => import('./pages/cliente/EditarMascota').then((m) => ({ default: m.EditarMascota })))
@@ -30,6 +31,7 @@ const Servicios = lazy(() => import('./pages/admin/catalogos/Servicios').then((m
 const Salas = lazy(() => import('./pages/admin/catalogos/Salas').then((m) => ({ default: m.Salas })))
 const Plantillas = lazy(() => import('./pages/admin/catalogos/Plantillas').then((m) => ({ default: m.Plantillas })))
 const Especies = lazy(() => import('./pages/admin/catalogos/Especies').then((m) => ({ default: m.Especies })))
+const Medicamentos = lazy(() => import('./pages/admin/catalogos/Medicamentos').then((m) => ({ default: m.Medicamentos })))
 const Usuarios = lazy(() => import('./pages/admin/Usuarios').then((m) => ({ default: m.Usuarios })))
 
 const loadingFallback = (
@@ -69,6 +71,7 @@ export const router = createBrowserRouter([
             { path: 'citas', element: withSuspense(<MisCitas />) },
             { path: 'citas/nueva', element: withSuspense(<NuevaCita />) },
             { path: 'citas/:id', element: withSuspense(<DetalleCitaCliente />) },
+            { path: 'perfil', element: withSuspense(<EditarPerfil />) },
         ],
       },
     ],
@@ -95,6 +98,7 @@ export const router = createBrowserRouter([
               { path: 'catalogos/salas', element: withSuspense(<Salas />) },
               { path: 'catalogos/plantillas', element: withSuspense(<Plantillas />) },
               { path: 'catalogos/especies', element: withSuspense(<Especies />) },
+              { path: 'catalogos/medicamentos', element: withSuspense(<Medicamentos />) },
             ],
           },
         ],

@@ -36,9 +36,14 @@ export function DetalleCita() {
         .from('cita')
         .select(`
           id, estado,
-          hueco!inner ( id, fecha, hora_inicio, hora_fin, sala ( id, nombre ), servicio ( id, nombre, precio ) ),
+          hueco!cita_id_hueco_fkey!inner ( id, fecha, hora_inicio, hora_fin, sala ( id, nombre ), servicio ( id, nombre, precio ) ),
           mascota ( id, nombre, especie_mascota ( nombre ) ),
-          cliente ( id, nombre, apellido, telefono )
+          cliente ( id, nombre, apellido, telefono ),
+          cita_hueco (
+            id_hueco,
+            orden,
+            hueco ( id, hora_inicio, hora_fin )
+          )
         `)
         .eq('id', id)
         .single()

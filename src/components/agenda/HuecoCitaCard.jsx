@@ -40,7 +40,14 @@ export function HuecoCitaCard({ cita, style }) {
   if (!cita) return null
 
   const horaInicio = cita.hueco?.hora_inicio
-  const horaFin = cita.hueco?.hora_fin
+  const extras = (cita?.cita_hueco || [])
+    .map((ch) => ch.hueco)
+    .filter(Boolean)
+    .sort((a, b) => (a.hora_inicio || '').localeCompare(b.hora_inicio || ''))
+  const horaFin = extras.length > 0
+    ? extras[extras.length - 1].hora_fin
+    : cita.hueco?.hora_fin
+  const tieneMultiples = (cita?.cita_hueco || []).length > 1
   const servicioNombre = cita.hueco?.servicio?.nombre || ''
   const accent = getServiceAccent(servicioNombre)
   const emoji = getEmoji(servicioNombre)
@@ -55,6 +62,11 @@ export function HuecoCitaCard({ cita, style }) {
         <div className="text-center min-w-[52px] shrink-0">
           <p className="text-sm font-bold text-[#2C1A0E] leading-tight">{formatHora(horaInicio)}</p>
           <p className="text-[11px] text-[#7A6555]">{formatHora(horaFin)}</p>
+          {tieneMultiples && (
+            <span className="inline-block text-[9px] text-[#C2570F] bg-[#FFF3EB] rounded-full px-1.5 mt-0.5">
+              x2
+            </span>
+          )}
         </div>
 
         <div className="w-px self-stretch bg-[#E8DDD0]" />

@@ -47,9 +47,14 @@ export function DetalleCitaCliente() {
         .from('cita')
         .select(`
           id, estado,
-          hueco!inner ( id, fecha, hora_inicio, hora_fin, sala ( id, nombre ), servicio ( id, nombre, precio ) ),
+          hueco!cita_id_hueco_fkey!inner ( id, fecha, hora_inicio, hora_fin, sala ( id, nombre ), servicio ( id, nombre, precio ) ),
           mascota ( id, nombre, especie_mascota ( nombre ) ),
-          cliente ( id, nombre, apellido, telefono )
+          cliente ( id, nombre, apellido, telefono ),
+          cita_hueco (
+            id_hueco,
+            orden,
+            hueco ( id, hora_inicio, hora_fin )
+          )
         `)
         .eq('id', id)
         .single()
@@ -105,6 +110,13 @@ export function DetalleCitaCliente() {
   const hueco = cita.hueco
   const mascota = cita.mascota
 
+  const extras = (cita?.cita_hueco || [])
+    .map((ch) => ch.hueco)
+    .filter(Boolean)
+    .sort((a, b) => (a.hora_inicio || '').localeCompare(b.hora_inicio || ''))
+  const horaInicio = extras[0]?.hora_inicio || hueco?.hora_inicio
+  const horaFin = extras[extras.length - 1]?.hora_fin || hueco?.hora_fin
+
   return (
     <div className="animate-fade-in-up">
       <div className="mb-6">
@@ -132,7 +144,7 @@ export function DetalleCitaCliente() {
               <InfoRow label="Servicio" value={hueco?.servicio?.nombre} />
               <InfoRow label="Sala" value={hueco?.sala?.nombre} />
               <InfoRow label="Fecha" value={formatFecha(hueco?.fecha)} />
-              <InfoRow label="Hora" value={`${formatHora(hueco?.hora_inicio)} - ${formatHora(hueco?.hora_fin)}`} />
+              <InfoRow label="Hora" value={`${formatHora(horaInicio)} - ${formatHora(horaFin)}`} />
               {cita.cliente?.telefono && <InfoRow label="Teléfono" value={cita.cliente.telefono} />}
               {hueco?.servicio?.precio && (
                 <InfoRow label="Precio" value={`S/ ${Number(hueco.servicio.precio).toFixed(2)}`} />

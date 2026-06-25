@@ -16,12 +16,17 @@ export function useCitas(idCliente) {
       .from('cita')
       .select(`
         id, estado, fecha_programada,
-        hueco (
+        hueco!cita_id_hueco_fkey (
           id, fecha, hora_inicio, hora_fin,
           sala ( id, nombre ),
           servicio ( id, nombre, precio )
         ),
-        mascota ( id, nombre )
+        mascota ( id, nombre ),
+        cita_hueco (
+          id_hueco,
+          orden,
+          hueco ( id, hora_inicio, hora_fin )
+        )
       `)
       .eq('id_cliente', idCliente)
 

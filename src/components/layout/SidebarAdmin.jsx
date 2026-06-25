@@ -76,6 +76,16 @@ function IconEspecies({ className, stroke }) {
   )
 }
 
+function IconMedicamentos({ className, stroke }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" stroke={stroke} strokeWidth="1.5">
+      <rect x="3.5" y="1.5" width="4" height="7" rx="1" />
+      <rect x="8.5" y="1.5" width="4" height="7" rx="1" />
+      <path d="M5.5 8.5V14M10.5 8.5V14M4 14H7M9 14H12" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function SidebarAdmin() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -125,6 +135,11 @@ export function SidebarAdmin() {
             label: 'Especies',
             path: '/admin/catalogos/especies',
             icon: (active) => <IconEspecies className="w-4 h-4" stroke={active ? '#fff' : '#E8DDD0'} />,
+          },
+          {
+            label: 'Medicamentos',
+            path: '/admin/catalogos/medicamentos',
+            icon: (active) => <IconMedicamentos className="w-4 h-4" stroke={active ? '#fff' : '#E8DDD0'} />,
           },
         ],
       })
