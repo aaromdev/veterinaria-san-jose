@@ -46,7 +46,7 @@ export function useAgenda(fecha) {
           )
         `)
         .eq('hueco.fecha', fecha)
-        .in('estado', ['PROGRAMADA', 'EN_ESPERA', 'FINALIZADA'])
+        .in('estado', ['PROGRAMADA', 'EN_ESPERA', 'FINALIZADA', 'NO_ASISTIO'])
       if (error) {
         setError(error.message)
         setCitas([])

@@ -5,6 +5,7 @@ import { useAdmin } from '../../context/AdminContext'
 import { InfoCitaPanel } from '../../components/atencion/InfoCitaPanel'
 import { PagoModal } from '../../components/atencion/PagoModal'
 import { RecetaForm } from '../../components/atencion/RecetaForm'
+import { ConfirmarAtencionModal } from '../../components/atencion/ConfirmarAtencionModal'
 import { HistoriaClinicaPanel } from '../../components/atencion/HistoriaClinicaPanel'
 import { usePago } from '../../hooks/usePago'
 import { useReceta } from '../../hooks/useReceta'
@@ -25,6 +26,7 @@ export function DetalleCita() {
   const [loading, setLoading] = useState(true)
   const [showPagoModal, setShowPagoModal] = useState(false)
   const [mostrandoAtencion, setMostrandoAtencion] = useState(false)
+  const [confirmacionData, setConfirmacionData] = useState(null)
   const [errorCarga, setErrorCarga] = useState(null)
 
   const { entradas, recetasMap, loading: loadingHistoria } = useHistoriaClinica(cita?.mascota?.id)
@@ -88,16 +90,19 @@ export function DetalleCita() {
 
   const handleIniciarAtencion = () => setMostrandoAtencion(true)
 
-  const handleFinalizarAtencion = async ({ diagnostico, observaciones, medicamentos, firmado }) => {
+  const handleFinalizarAtencion = ({ diagnostico, observaciones, medicamentos, firmado }) => {
+    setConfirmacionData({ diagnostico, observaciones, medicamentos, firmado })
+  }
+
+  const handleConfirmarAtencion = async () => {
+    if (!confirmacionData) return
     const ok = await finalizarAtencion({
       id_cita: id,
       id_veterinario: personal?.id,
-      diagnostico,
-      observaciones,
-      medicamentos,
-      firmado,
+      ...confirmacionData,
     })
     if (ok) {
+      setConfirmacionData(null)
       setMostrandoAtencion(false)
       cargar()
     }
@@ -165,7 +170,7 @@ export function DetalleCita() {
             errorPdf={errorPdf}
           />
 
-          {(mostrandoAtencion || cita.estado === 'FINALIZADA') && (
+          {mostrandoAtencion && (
             <RecetaForm
               onFinalizar={handleFinalizarAtencion}
               saving={savingReceta}
@@ -221,6 +226,15 @@ export function DetalleCita() {
         montoSugerido={cita?.hueco?.servicio?.precio || ''}
         saving={savingPago}
         error={errorPago}
+      />
+
+      <ConfirmarAtencionModal
+        open={!!confirmacionData}
+        onClose={() => setConfirmacionData(null)}
+        onConfirm={handleConfirmarAtencion}
+        data={confirmacionData}
+        cita={cita}
+        saving={savingReceta}
       />
     </div>
   )

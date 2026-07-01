@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { StepperHeader } from '../registro/StepperHeader'
 import { FormCliente } from '../registro/FormCliente'
 import { FormMascota } from '../registro/FormMascota'
 import { useReveal } from '../../hooks/useReveal'
+import { Button } from '../ui/Button'
 import { LIMITES, validarLongitud } from '../../lib/validaciones'
 
 const clienteVacio = {
@@ -66,7 +66,6 @@ function validarMascota(d) {
 
 export function RegistroForm() {
   const navigate = useNavigate()
-  const [paso, setPaso] = useState(1)
   const [cliente, setCliente] = useState(clienteVacio)
   const [mascota, setMascota] = useState(mascotaVacia)
   const [errors, setErrors] = useState({})
@@ -75,50 +74,17 @@ export function RegistroForm() {
 
   const { ref, isVisible } = useReveal()
 
-  const handleSiguiente = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
-    const e2 = validarCliente(cliente)
-    setErrors(e2)
-    if (Object.keys(e2).length > 0) return
-
-    setLoading(true)
     setErrorGeneral('')
 
-    try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: cliente.email,
-        password: cliente.password,
-      })
-
-      if (authError) {
-        setErrorGeneral(authError.message)
-        setTimeout(() => setErrorGeneral(''), 8000)
-        return
-      }
-
-      if (!authData.session) {
-        setErrorGeneral('Debes confirmar tu email para continuar')
-        setTimeout(() => setErrorGeneral(''), 8000)
-        return
-      }
-
-      setPaso(2)
-    } catch (err) {
-      setErrorGeneral('Error inesperado. Intenta de nuevo.')
-      setTimeout(() => setErrorGeneral(''), 8000)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleFinalizar = async (e) => {
-    e.preventDefault()
-    const e2 = validarMascota(mascota)
-    setErrors(e2)
-    if (Object.keys(e2).length > 0) return
+    const errCliente = validarCliente(cliente)
+    const errMascota = validarMascota(mascota)
+    const todosErrores = { ...errCliente, ...errMascota }
+    setErrors(todosErrores)
+    if (Object.keys(todosErrores).length > 0) return
 
     setLoading(true)
-    setErrorGeneral('')
 
     const { data: docExistente } = await supabase
       .from('cliente')
@@ -135,6 +101,20 @@ export function RegistroForm() {
     }
 
     try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: cliente.email,
+        password: cliente.password,
+      })
+
+      if (authError) throw new Error(authError.message)
+
+      if (!authData.session) {
+        setErrorGeneral('Debes confirmar tu email para continuar')
+        setTimeout(() => setErrorGeneral(''), 8000)
+        setLoading(false)
+        return
+      }
+
       const { error: registroError } = await supabase.rpc('register_cliente', {
         p_id_tipo_documento: cliente.id_tipo_documento,
         p_numero_documento: cliente.numero_documento,
@@ -151,19 +131,17 @@ export function RegistroForm() {
 
       navigate('/cliente/mascotas')
     } catch (err) {
-      console.error('Error en registro:', err)
       try { await supabase.rpc('limpiar_registro_fallido') }
-      catch (e) { console.error('Error al limpiar registro huérfano:', e) }
+      catch (e) { /* ignore */ }
       await supabase.auth.signOut()
       setCliente(clienteVacio)
       setMascota(mascotaVacia)
-      setPaso(1)
       setErrorGeneral(err.message || 'Error inesperado. Intenta de nuevo.')
       setTimeout(() => setErrorGeneral(''), 8000)
     } finally {
       setLoading(false)
     }
-  }
+  }, [cliente, mascota, navigate])
 
   return (
     <section className="relative flex items-center justify-center px-4 py-16 overflow-hidden">
@@ -184,29 +162,32 @@ export function RegistroForm() {
             <p className="text-sm text-[#7A6555] mt-1">Registrate y agrega a tu mascota</p>
           </div>
 
-          <StepperHeader currentStep={paso} />
-
           {errorGeneral && (
             <p className="text-xs text-[#B91C1C] text-center bg-[#B91C1C]/5 py-2 px-3 rounded-lg mb-4">{errorGeneral}</p>
           )}
 
-          {paso === 1 ? (
+          <form onSubmit={handleSubmit} className="space-y-4">
             <FormCliente
               data={cliente}
               onChange={setCliente}
-              onSubmit={handleSiguiente}
               errors={errors}
-              loading={loading}
+              hideSubmit
             />
-          ) : (
-            <FormMascota
-              data={mascota}
-              onChange={setMascota}
-              onSubmit={handleFinalizar}
-              errors={errors}
-              loading={loading}
-            />
-          )}
+
+            <div className="border-t border-[#E8DDD0] pt-4">
+              <h2 className="text-sm font-semibold text-[#2C1A0E] mb-4">Datos de la mascota</h2>
+              <FormMascota
+                data={mascota}
+                onChange={setMascota}
+                errors={errors}
+                hideSubmit
+              />
+            </div>
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Creando cuenta...' : 'Crear cuenta'}
+            </Button>
+          </form>
         </div>
       </div>
     </section>

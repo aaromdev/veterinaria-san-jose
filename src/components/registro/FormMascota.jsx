@@ -8,14 +8,14 @@ import { LIMITES } from '../../lib/validaciones'
 
 const hoyISO = () => new Date().toISOString().split('T')[0]
 
-export function FormMascota({ data, onChange, onSubmit, errors, submitLabel = 'Finalizar registro' }) {
+export function FormMascota({ data, onChange, onSubmit, errors, submitLabel = 'Finalizar registro', loading = false, hideSubmit = false }) {
   const { especies } = useEspecies()
 
   const handleChange = (field) => (e) => onChange({ ...data, [field]: e.target.value })
   const especieOptions = useMemo(() => especies.map((e) => ({ value: e.id, label: e.nombre })), [especies])
 
-  return (
-    <form onSubmit={onSubmit} className="space-y-4">
+  const campos = (
+    <>
       <Input
         label="Nombre de la mascota"
         placeholder="Ej: Firulais"
@@ -47,8 +47,16 @@ export function FormMascota({ data, onChange, onSubmit, errors, submitLabel = 'F
         onChange={handleChange('fecha_nacimiento')}
         error={errors.fecha_nacimiento}
       />
-      <Button type="submit" className="w-full">
-        {submitLabel}
+    </>
+  )
+
+  if (hideSubmit) return campos
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      {campos}
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? 'Registrando...' : submitLabel}
       </Button>
     </form>
   )

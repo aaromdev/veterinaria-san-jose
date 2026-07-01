@@ -6,14 +6,14 @@ import { Select } from '../ui/Select'
 import { PasswordStrengthIndicator } from '../ui/PasswordStrengthIndicator'
 import { LIMITES } from '../../lib/validaciones'
 
-export function FormCliente({ data, onChange, onSubmit, errors, loading = false }) {
+export function FormCliente({ data, onChange, onSubmit, errors, loading = false, hideSubmit = false }) {
   const { tipos } = useTipoDocumento()
 
   const handleChange = (field) => (e) => onChange({ ...data, [field]: e.target.value })
   const tipoOptions = useMemo(() => tipos.map((t) => ({ value: t.id, label: t.nombre })), [tipos])
 
-  return (
-    <form onSubmit={onSubmit} className="space-y-4">
+  const campos = (
+    <>
       <Select
         label="Tipo de documento"
         placeholder="Seleccionar tipo"
@@ -86,6 +86,14 @@ export function FormCliente({ data, onChange, onSubmit, errors, loading = false 
         onChange={handleChange('confirmarPassword')}
         error={errors.confirmarPassword}
       />
+    </>
+  )
+
+  if (hideSubmit) return campos
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      {campos}
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? 'Creando cuenta...' : 'Siguiente'}
       </Button>

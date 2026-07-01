@@ -1,6 +1,23 @@
+import { useMemo } from 'react'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { usePermisos } from '../../hooks/usePermisos'
+
+function horaActualLima() {
+  const ahora = new Date()
+  return new Date(ahora.toLocaleString('en-US', { timeZone: 'America/Lima' }))
+}
+
+function combinarFechaHora(fecha, hora) {
+  const [h, m] = hora.split(':')
+  const d = new Date(fecha)
+  d.setHours(Number(h), Number(m), 0, 0)
+  return d
+}
+
+function diffMinutos(futuro) {
+  return Math.round((futuro.getTime() - horaActualLima().getTime()) / 60000)
+}
 
 function InfoRow({ label, value }) {
   return (
@@ -32,6 +49,14 @@ export function InfoCitaPanel({
   const horaInicio = extras[0]?.hora_inicio || cita?.hueco?.hora_inicio
   const horaFin = extras[extras.length - 1]?.hora_fin || cita?.hueco?.hora_fin
 
+  const minutosParaCita = useMemo(() => {
+    if (!cita?.hueco?.fecha || !horaInicio) return null
+    return diffMinutos(combinarFechaHora(cita.hueco.fecha, horaInicio))
+  }, [cita, horaInicio])
+
+  const puedePagar = minutosParaCita !== null && minutosParaCita <= 60
+  const puedeIniciar = minutosParaCita !== null && minutosParaCita <= 5
+
   return (
     <div className="bg-white border border-[#E8DDD0] rounded-xl p-5 space-y-4">
       <div className="flex items-center justify-between">
@@ -53,9 +78,15 @@ export function InfoCitaPanel({
           <Button
             className="w-full"
             onClick={onRegistrarPago}
+            disabled={!puedePagar}
           >
             Marcar presencia y registrar pago
           </Button>
+          {!puedePagar && minutosParaCita !== null && (
+            <p className="text-xs text-[#7A6555] text-center">
+              Disponible desde {Math.max(0, minutosParaCita - 60)} minutos antes de la cita
+            </p>
+          )}
           <Button
             variant="destructive"
             className="w-full"
@@ -81,9 +112,14 @@ export function InfoCitaPanel({
             </div>
           )}
           {can('atencion.iniciar') && (
-            <Button className="w-full" onClick={onIniciarAtencion}>
+            <Button className="w-full" onClick={onIniciarAtencion} disabled={!puedeIniciar}>
               Iniciar atención
             </Button>
+          )}
+          {!puedeIniciar && minutosParaCita !== null && (
+            <p className="text-xs text-[#7A6555] text-center">
+              Disponible desde 5 minutos antes de la cita
+            </p>
           )}
         </div>
       )}
