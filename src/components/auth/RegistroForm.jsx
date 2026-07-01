@@ -29,21 +29,23 @@ function validarCliente(d) {
   const e = {}
   if (!d.id_tipo_documento) e.id_tipo_documento = 'Selecciona un tipo de documento'
   if (!d.numero_documento.trim()) e.numero_documento = 'Campo obligatorio'
+  else if (d.numero_documento.trim().length < 8) e.numero_documento = 'Debe tener mínimo 8 caracteres'
   let err = validarLongitud(d.numero_documento, LIMITES.CLIENTE_NUMERO_DOCUMENTO, 'El número de documento')
-  if (err) e.numero_documento = err
+  if (err && !e.numero_documento) e.numero_documento = err
   if (!d.nombre.trim()) e.nombre = 'Campo obligatorio'
   err = validarLongitud(d.nombre, LIMITES.CLIENTE_NOMBRE, 'El nombre')
   if (err) e.nombre = err
   if (!d.apellido.trim()) e.apellido = 'Campo obligatorio'
   err = validarLongitud(d.apellido, LIMITES.CLIENTE_APELLIDO, 'El apellido')
   if (err) e.apellido = err
-  if (!/^\d{9}$/.test(d.telefono)) e.telefono = 'Debe tener 9 digitos'
+  if (!/^\d{9,11}$/.test(d.telefono)) e.telefono = 'Debe tener entre 9 y 11 dígitos'
   err = validarLongitud(d.telefono, LIMITES.CLIENTE_TELEFONO, 'El teléfono')
-  if (err) e.telefono = err
+  if (err && !e.telefono) e.telefono = err
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) e.email = 'Email invalido'
   err = validarLongitud(d.email, LIMITES.EMAIL, 'El email')
   if (err) e.email = err
-  if (d.password.length < 6) e.password = 'Minimo 6 caracteres'
+  const passwordOk = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"|<>?,.\/`~]).{6,}$/.test(d.password)
+  if (!passwordOk) e.password = 'La contraseña no cumple los requisitos de seguridad'
   if (d.password !== d.confirmarPassword) e.confirmarPassword = 'Las contrasenas no coinciden'
   return e
 }
@@ -69,42 +71,25 @@ export function RegistroForm() {
   const [mascota, setMascota] = useState(mascotaVacia)
   const [errors, setErrors] = useState({})
   const [errorGeneral, setErrorGeneral] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const { ref, isVisible } = useReveal()
 
-  const handleSiguiente = (e) => {
+  const handleSiguiente = async (e) => {
     e.preventDefault()
     const e2 = validarCliente(cliente)
     setErrors(e2)
-    if (Object.keys(e2).length === 0) setPaso(2)
-  }
-
-  const handleFinalizar = async (e) => {
-    e.preventDefault()
-    const e2 = validarMascota(mascota)
-    setErrors(e2)
     if (Object.keys(e2).length > 0) return
 
+    setLoading(true)
     setErrorGeneral('')
-
-    const { data: docExistente } = await supabase
-      .from('cliente')
-      .select('id')
-      .eq('id_tipo_documento', cliente.id_tipo_documento)
-      .eq('numero_documento', cliente.numero_documento.trim())
-      .maybeSingle()
-
-    if (docExistente) {
-      setErrorGeneral('Ya existe un cliente registrado con ese documento de identidad')
-      setTimeout(() => setErrorGeneral(''), 8000)
-      return
-    }
 
     try {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: cliente.email,
         password: cliente.password,
       })
+
       if (authError) {
         setErrorGeneral(authError.message)
         setTimeout(() => setErrorGeneral(''), 8000)
@@ -117,6 +102,39 @@ export function RegistroForm() {
         return
       }
 
+      setPaso(2)
+    } catch (err) {
+      setErrorGeneral('Error inesperado. Intenta de nuevo.')
+      setTimeout(() => setErrorGeneral(''), 8000)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleFinalizar = async (e) => {
+    e.preventDefault()
+    const e2 = validarMascota(mascota)
+    setErrors(e2)
+    if (Object.keys(e2).length > 0) return
+
+    setLoading(true)
+    setErrorGeneral('')
+
+    const { data: docExistente } = await supabase
+      .from('cliente')
+      .select('id')
+      .eq('id_tipo_documento', cliente.id_tipo_documento)
+      .eq('numero_documento', cliente.numero_documento.trim())
+      .maybeSingle()
+
+    if (docExistente) {
+      setErrorGeneral('Ya existe un cliente registrado con ese documento de identidad')
+      setTimeout(() => setErrorGeneral(''), 8000)
+      setLoading(false)
+      return
+    }
+
+    try {
       const { error: registroError } = await supabase.rpc('register_cliente', {
         p_id_tipo_documento: cliente.id_tipo_documento,
         p_numero_documento: cliente.numero_documento,
@@ -129,20 +147,21 @@ export function RegistroForm() {
         p_fecha_nacimiento: mascota.fecha_nacimiento,
       })
 
-      if (registroError) {
-        console.error('Error en register_cliente RPC:', registroError)
-        try { await supabase.rpc('limpiar_registro_fallido') }
-        catch (e) { console.error('Error al limpiar registro huérfano:', e) }
-        setErrorGeneral(registroError.message)
-        setTimeout(() => setErrorGeneral(''), 8000)
-        return
-      }
+      if (registroError) throw new Error(registroError.message)
 
       navigate('/cliente/mascotas')
     } catch (err) {
-      console.error('Error inesperado en registro:', err)
-      setErrorGeneral('Error inesperado. Intenta de nuevo.')
+      console.error('Error en registro:', err)
+      try { await supabase.rpc('limpiar_registro_fallido') }
+      catch (e) { console.error('Error al limpiar registro huérfano:', e) }
+      await supabase.auth.signOut()
+      setCliente(clienteVacio)
+      setMascota(mascotaVacia)
+      setPaso(1)
+      setErrorGeneral(err.message || 'Error inesperado. Intenta de nuevo.')
       setTimeout(() => setErrorGeneral(''), 8000)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -177,6 +196,7 @@ export function RegistroForm() {
               onChange={setCliente}
               onSubmit={handleSiguiente}
               errors={errors}
+              loading={loading}
             />
           ) : (
             <FormMascota
@@ -184,6 +204,7 @@ export function RegistroForm() {
               onChange={setMascota}
               onSubmit={handleFinalizar}
               errors={errors}
+              loading={loading}
             />
           )}
         </div>

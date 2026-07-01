@@ -3,9 +3,10 @@ import { useTipoDocumento } from '../../hooks/useTipoDocumento'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Select } from '../ui/Select'
+import { PasswordStrengthIndicator } from '../ui/PasswordStrengthIndicator'
 import { LIMITES } from '../../lib/validaciones'
 
-export function FormCliente({ data, onChange, onSubmit, errors }) {
+export function FormCliente({ data, onChange, onSubmit, errors, loading = false }) {
   const { tipos } = useTipoDocumento()
 
   const handleChange = (field) => (e) => onChange({ ...data, [field]: e.target.value })
@@ -76,6 +77,7 @@ export function FormCliente({ data, onChange, onSubmit, errors }) {
         onChange={handleChange('password')}
         error={errors.password}
       />
+      <PasswordStrengthIndicator password={data.password} />
       <Input
         label="Confirmar contraseña"
         type="password"
@@ -84,8 +86,8 @@ export function FormCliente({ data, onChange, onSubmit, errors }) {
         onChange={handleChange('confirmarPassword')}
         error={errors.confirmarPassword}
       />
-      <Button type="submit" className="w-full">
-        Siguiente
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? 'Creando cuenta...' : 'Siguiente'}
       </Button>
     </form>
   )

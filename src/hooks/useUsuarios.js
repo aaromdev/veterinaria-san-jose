@@ -37,6 +37,7 @@ export function useUsuarios() {
   const crear = useCallback(async (datos) => {
     setSaving(true)
     setError(null)
+    let cuentaId = null
     try {
       if (datos.tipo === 'CLIENTE' && datos.id_tipo_documento && datos.numero_documento) {
         const { data: docExistente } = await supabase
@@ -59,7 +60,7 @@ export function useUsuarios() {
       })
 
       if (authError) throw new Error(authError.message)
-      const cuentaId = authData.user?.id
+      cuentaId = authData.user?.id
       if (!cuentaId) throw new Error('No se pudo crear la cuenta')
 
       const { error: perfilError } = await supabase
@@ -78,6 +79,9 @@ export function useUsuarios() {
       await cargar()
       return true
     } catch (err) {
+      if (cuentaId) {
+        await supabase.rpc('admin_limpiar_cuenta', { p_cuenta_id: cuentaId }).catch(() => {})
+      }
       setError(err.message)
       return false
     } finally {

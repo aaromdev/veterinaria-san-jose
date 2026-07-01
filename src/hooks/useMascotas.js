@@ -60,26 +60,14 @@ export function useMascotas() {
     if (clienteError || !cliente) throw new Error('No se pudo identificar al cliente')
 
     const { data: mascota, error: mascotaError } = await supabase
-      .from('mascota')
-      .insert({
-        id_cliente: cliente.id,
-        id_especie: datos.id_especie,
-        id_raza: datos.id_raza || null,
-        nombre: datos.nombre.trim(),
-        fecha_nacimiento: datos.fecha_nacimiento,
+      .rpc('crear_mascota', {
+        p_id_cliente: cliente.id,
+        p_id_especie: datos.id_especie,
+        p_id_raza: datos.id_raza || null,
+        p_nombre: datos.nombre.trim(),
+        p_fecha_nacimiento: datos.fecha_nacimiento,
       })
-      .select(`
-        id, nombre, fecha_nacimiento, is_active,
-        especie_mascota ( id, nombre ),
-        raza ( id, nombre )
-      `)
-      .single()
     if (mascotaError) throw new Error(formatearErrorSupabase(mascotaError))
-
-    const { error: historiaError } = await supabase
-      .from('historia_clinica')
-      .insert({ id_mascota: mascota.id })
-    if (historiaError) throw new Error(formatearErrorSupabase(historiaError))
 
     setMascotas((prev) => [...prev, mascota].sort((a, b) => a.nombre.localeCompare(b.nombre)))
     return mascota
