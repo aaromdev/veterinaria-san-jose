@@ -3,20 +3,13 @@ import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { usePermisos } from '../../hooks/usePermisos'
 
-function horaActualLima() {
-  const ahora = new Date()
-  return new Date(ahora.toLocaleString('en-US', { timeZone: 'America/Lima' }))
+function timestampCita(fecha, hora) {
+  // Construye la fecha de la cita como Peru (UTC-5) y devuelve timestamp absoluto
+  return new Date(`${fecha}T${hora}:00.000-05:00`).getTime()
 }
 
-function combinarFechaHora(fecha, hora) {
-  const [h, m] = hora.split(':')
-  const d = new Date(fecha)
-  d.setHours(Number(h), Number(m), 0, 0)
-  return d
-}
-
-function diffMinutos(futuro) {
-  return Math.round((futuro.getTime() - horaActualLima().getTime()) / 60000)
+function diffMinutos(fecha, hora) {
+  return Math.round((timestampCita(fecha, hora) - Date.now()) / 60000)
 }
 
 function InfoRow({ label, value }) {
@@ -51,7 +44,7 @@ export function InfoCitaPanel({
 
   const minutosParaCita = useMemo(() => {
     if (!cita?.hueco?.fecha || !horaInicio) return null
-    return diffMinutos(combinarFechaHora(cita.hueco.fecha, horaInicio))
+    return diffMinutos(cita.hueco.fecha, horaInicio)
   }, [cita, horaInicio])
 
   const puedePagar = minutosParaCita !== null && minutosParaCita <= 60
