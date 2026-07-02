@@ -84,7 +84,7 @@ export function InfoCitaPanel({
           </Button>
           {!puedePagar && minutosParaCita !== null && (
             <p className="text-xs text-[#7A6555] text-center">
-              Disponible desde {Math.max(0, minutosParaCita - 60)} minutos antes de la cita
+              Solo se puede marcar y pagar estando a 1 hora de la hora de inicio de la cita.
             </p>
           )}
           <Button
@@ -118,7 +118,7 @@ export function InfoCitaPanel({
           )}
           {!puedeIniciar && minutosParaCita !== null && (
             <p className="text-xs text-[#7A6555] text-center">
-              Disponible desde 5 minutos antes de la cita
+              Solo puede iniciar la atencion a 5 minutos de la hora de inicio de la cita.
             </p>
           )}
         </div>
