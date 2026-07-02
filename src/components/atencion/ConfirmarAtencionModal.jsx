@@ -12,6 +12,9 @@ function InfoRow({ label, value }) {
 export function ConfirmarAtencionModal({ open, onClose, onConfirm, data, cita, saving }) {
   if (!open) return null
 
+  const mascotas = cita?.cita_mascota?.map(cm => cm.mascota).filter(Boolean) || []
+  const mascotasAtencion = data?.mascotas_atencion || []
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div
@@ -23,42 +26,49 @@ export function ConfirmarAtencionModal({ open, onClose, onConfirm, data, cita, s
 
           <div>
             <InfoRow label="Cliente" value={`${cita?.cliente?.nombre || ''} ${cita?.cliente?.apellido || ''}`} />
-            <InfoRow label="Mascota" value={cita?.mascota?.nombre} />
+            <InfoRow label="Mascota(s)" value={mascotas.map(m => m.nombre).join(', ')} />
             <InfoRow label="Servicio" value={cita?.hueco?.servicio?.nombre} />
             <InfoRow label="Hora" value={`${cita?.hueco?.hora_inicio?.slice(0, 5)} - ${cita?.hueco?.hora_fin?.slice(0, 5)}`} />
           </div>
 
-          <div className="border-t border-[#E8DDD0] pt-4">
-            <h4 className="text-sm font-semibold text-[#2C1A0E] mb-2">Resumen de la receta</h4>
-            <div className="bg-[#FAF7F2] rounded-lg p-3 space-y-2 text-sm">
-              <div>
-                <span className="text-xs font-medium text-[#7A6555]">Diagnóstico: </span>
-                <span className="text-[#2C1A0E]">{data?.diagnostico}</span>
-              </div>
-              {data?.observaciones && (
-                <div>
-                  <span className="text-xs font-medium text-[#7A6555]">Observaciones: </span>
-                  <span className="text-[#2C1A0E]">{data.observaciones}</span>
+          <div className="border-t border-[#E8DDD0] pt-4 space-y-4">
+            <h4 className="text-sm font-semibold text-[#2C1A0E]">Resumen de recetas</h4>
+            {mascotasAtencion.map((ma) => {
+              const masc = mascotas.find(m => m.id === ma.id_mascota)
+              const nombre = masc?.nombre || 'Mascota'
+              return (
+                <div key={ma.id_mascota} className="bg-[#FAF7F2] rounded-lg p-3 space-y-2 text-sm">
+                  <p className="text-xs font-semibold text-[#C2570F]">{nombre}</p>
+                  <div>
+                    <span className="text-xs font-medium text-[#7A6555]">Diagnóstico: </span>
+                    <span className="text-[#2C1A0E]">{ma.diagnostico}</span>
+                  </div>
+                  {ma.observaciones && (
+                    <div>
+                      <span className="text-xs font-medium text-[#7A6555]">Observaciones: </span>
+                      <span className="text-[#2C1A0E]">{ma.observaciones}</span>
+                    </div>
+                  )}
+                  {ma.medicamentos?.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-[#7A6555] mb-1">Medicamentos ({ma.medicamentos.length}):</p>
+                      <ul className="space-y-1">
+                        {ma.medicamentos.map((med, j) => (
+                          <li key={j} className="text-[#2C1A0E]">
+                            {med.medicamento}{med.dosis ? ` — ${med.dosis}` : ''}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-              )}
-              {data?.medicamentos?.length > 0 && (
-                <div>
-                  <p className="text-xs font-medium text-[#7A6555] mb-1">Medicamentos ({data.medicamentos.length}):</p>
-                  <ul className="space-y-1">
-                    {data.medicamentos.map((m) => (
-                      <li key={m.id} className="text-[#2C1A0E]">
-                        {m.nombre}{m.dosis ? ` — ${m.dosis}` : ''}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              <div className="pt-1">
-                <span className="text-xs font-medium text-[#7A6555]">Firma: </span>
-                <span className={data?.firmado ? 'text-[#4A7C59]' : 'text-[#7A6555]'}>
-                  {data?.firmado ? '✓ Firmada' : 'Sin firmar'}
-                </span>
-              </div>
+              )
+            })}
+            <div className="pt-1">
+              <span className="text-xs font-medium text-[#7A6555]">Firma: </span>
+              <span className={data?.firmado ? 'text-[#4A7C59]' : 'text-[#7A6555]'}>
+                {data?.firmado ? '✓ Firmada' : 'Sin firmar'}
+              </span>
             </div>
           </div>
 

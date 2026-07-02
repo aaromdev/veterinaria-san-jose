@@ -31,13 +31,15 @@ export function useAgenda(fecha) {
       const { data, error } = await supabase
         .from('cita')
         .select(`
-          id, estado,
+          id, estado, precio_total,
           hueco!cita_id_hueco_fkey!inner (
             id, fecha, hora_inicio, hora_fin,
             sala!inner ( id, nombre ),
             servicio ( id, nombre )
           ),
-          mascota ( id, nombre ),
+          cita_mascota (
+            mascota ( id, nombre )
+          ),
           cliente ( id, nombre, apellido, telefono ),
           cita_hueco (
             id_hueco,

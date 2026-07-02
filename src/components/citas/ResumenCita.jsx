@@ -80,8 +80,13 @@ export function ResumenCita({ mascotas, servicio, huecos, onConfirm, loading }) 
       </div>
 
       <div className="text-xs text-[#7A6555] text-center bg-[#FAF7F2] rounded-lg py-2">
-        {mascotas?.length || 0} mascota{(mascotas?.length || 0) !== 1 ? 's' : ''} × {huecos?.length || 0} hueco{(huecos?.length || 0) !== 1 ? 's' : ''} = {(mascotas?.length || 0) * (huecos?.length || 0)} cita{((mascotas?.length || 0) * (huecos?.length || 0)) !== 1 ? 's' : ''}
+        {mascotas?.length || 0} mascota{(mascotas?.length || 0) !== 1 ? 's' : ''} · {huecos?.length || 0} hueco{(huecos?.length || 0) !== 1 ? 's' : ''} consecutivos · 1 cita
       </div>
+      {servicio?.precio && huecos?.length > 1 && (
+        <p className="text-xs text-[#7A6555] text-center">
+          Total: S/ {(Number(servicio.precio) * (huecos?.length || 0)).toFixed(2)}
+        </p>
+      )}
 
       <Button className="w-full" onClick={onConfirm} disabled={loading}>
         {loading ? 'Reservando...' : 'Confirmar reserva'}

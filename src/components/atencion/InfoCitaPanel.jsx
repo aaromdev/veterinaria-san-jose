@@ -37,6 +37,10 @@ export function InfoCitaPanel({
 
   const formatHora = (hora) => hora?.slice(0, 5) || '--:--'
 
+  const mascotas = cita?.cita_mascota?.map(cm => cm.mascota).filter(Boolean) || []
+  const precioBase = Number(cita?.hueco?.servicio?.precio || 0)
+  const precioTotal = Number(cita?.precio_total || precioBase)
+
   const extras = (cita?.cita_hueco || [])
     .map((ch) => ch.hueco)
     .filter(Boolean)
@@ -61,11 +65,12 @@ export function InfoCitaPanel({
 
       <div>
         <InfoRow label="Cliente" value={`${cita?.cliente?.nombre || ''} ${cita?.cliente?.apellido || ''}`} />
-        <InfoRow label="Mascota" value={cita?.mascota?.nombre} />
+        <InfoRow label="Mascota(s)" value={mascotas.length > 0 ? mascotas.map(m => m.nombre).join(', ') : '—'} />
         <InfoRow label="Servicio" value={cita?.hueco?.servicio?.nombre} />
         <InfoRow label="Sala" value={cita?.hueco?.sala?.nombre} />
         <InfoRow label="Hora" value={`${formatHora(horaInicio)} - ${formatHora(horaFin)}`} />
         <InfoRow label="Teléfono" value={cita?.cliente?.telefono} />
+        {precioTotal > 0 && <InfoRow label="Total" value={`S/ ${precioTotal.toFixed(2)}`} />}
       </div>
 
       {cita?.estado === 'PROGRAMADA' && can('pago.registrar') && (
@@ -99,9 +104,9 @@ export function InfoCitaPanel({
               <p className="text-xs font-medium text-[#7A6555] uppercase tracking-wide">Pago registrado</p>
               <p className="text-sm font-semibold text-[#2C1A0E]">S/ {Number(pagoInfo.monto || 0).toFixed(2)}</p>
               <p className="text-xs text-[#7A6555]">{pagoInfo.metodo_pago?.nombre}</p>
-              {cita?.hueco?.servicio?.precio && Number(pagoInfo.monto) > Number(cita.hueco.servicio.precio) && (
+              {precioTotal > 0 && Number(pagoInfo.monto) > precioTotal && (
                 <p className="text-xs font-medium text-green-700">
-                  Vuelto: S/ {(Number(pagoInfo.monto) - Number(cita.hueco.servicio.precio)).toFixed(2)}
+                  Vuelto: S/ {(Number(pagoInfo.monto) - precioTotal).toFixed(2)}
                 </p>
               )}
             </div>

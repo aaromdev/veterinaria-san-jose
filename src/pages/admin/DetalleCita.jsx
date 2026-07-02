@@ -17,7 +17,7 @@ export function DetalleCita() {
   const navigate = useNavigate()
   const { personal } = useAdmin()
   const { registrarPago, getPagoDeCita, saving: savingPago, error: errorPago } = usePago()
-  const { finalizarAtencion, getRecetaDeCita, saving: savingReceta, error: errorReceta } = useReceta()
+  const { getRecetaDeCita, error: errorReceta } = useReceta()
   const { generarPdf, generando: generandoPdf, error: errorPdf } = useGenerarPdfReceta()
 
   const [cita, setCita] = useState(null)
@@ -28,8 +28,20 @@ export function DetalleCita() {
   const [mostrandoAtencion, setMostrandoAtencion] = useState(false)
   const [confirmacionData, setConfirmacionData] = useState(null)
   const [errorCarga, setErrorCarga] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [selectedMascotaId, setSelectedMascotaId] = useState(null)
 
-  const { entradas, recetasMap, loading: loadingHistoria } = useHistoriaClinica(cita?.mascota?.id)
+  const mascotasDelCita = cita?.cita_mascota?.map(cm => cm.mascota) || []
+  const { entradas, recetasMap, loading: loadingHistoria } = useHistoriaClinica(selectedMascotaId)
+
+  useEffect(() => {
+    if (mascotasDelCita.length > 0) {
+      setSelectedMascotaId(prev => {
+        if (prev && mascotasDelCita.some(m => m.id === prev)) return prev
+        return mascotasDelCita[0].id
+      })
+    }
+  }, [mascotasDelCita])
 
   const cargar = useCallback(async () => {
     setLoading(true)
@@ -37,9 +49,11 @@ export function DetalleCita() {
       const { data, error } = await supabase
         .from('cita')
         .select(`
-          id, estado,
+          id, estado, precio_total,
           hueco!cita_id_hueco_fkey!inner ( id, fecha, hora_inicio, hora_fin, sala ( id, nombre ), servicio ( id, nombre, precio ) ),
-          mascota ( id, nombre, especie_mascota ( nombre ) ),
+          cita_mascota (
+            mascota ( id, nombre, especie_mascota ( nombre ) )
+          ),
           cliente ( id, nombre, apellido, telefono ),
           cita_hueco (
             id_hueco,
@@ -90,22 +104,28 @@ export function DetalleCita() {
 
   const handleIniciarAtencion = () => setMostrandoAtencion(true)
 
-  const handleFinalizarAtencion = ({ diagnostico, observaciones, medicamentos, firmado }) => {
-    setConfirmacionData({ diagnostico, observaciones, medicamentos, firmado })
+  const handleFinalizarAtencion = ({ mascotas_atencion, firmado }) => {
+    setConfirmacionData({ mascotas_atencion, firmado })
   }
 
   const handleConfirmarAtencion = async () => {
     if (!confirmacionData) return
-    const ok = await finalizarAtencion({
-      id_cita: id,
-      id_veterinario: personal?.id,
-      ...confirmacionData,
+    setSaving(true)
+    const { error: rpcError } = await supabase.rpc('finalizar_atencion_multi', {
+      p_id_cita: id,
+      p_id_veterinario: personal?.id,
+      p_firmado: confirmacionData.firmado ?? false,
+      p_mascotas_atencion: confirmacionData.mascotas_atencion || [],
     })
-    if (ok) {
-      setConfirmacionData(null)
-      setMostrandoAtencion(false)
-      cargar()
+    if (rpcError) {
+      alert('Error al finalizar atención: ' + rpcError.message)
+      setSaving(false)
+      return
     }
+    setConfirmacionData(null)
+    setMostrandoAtencion(false)
+    setSaving(false)
+    cargar()
   }
 
   const handleCancelarCita = async () => {
@@ -172,8 +192,9 @@ export function DetalleCita() {
 
           {mostrandoAtencion && (
             <RecetaForm
+              cita={cita}
               onFinalizar={handleFinalizarAtencion}
-              saving={savingReceta}
+              saving={saving}
               error={errorReceta}
             />
           )}
@@ -214,7 +235,26 @@ export function DetalleCita() {
           )}
         </div>
 
-        <div>
+        <div className="space-y-4">
+          {mascotasDelCita.length > 1 && (
+            <div className="bg-white border border-[#E8DDD0] rounded-xl p-4">
+              <h4 className="text-xs font-semibold text-[#2C1A0E] mb-3">Ver historia de</h4>
+              <div className="space-y-2">
+                {mascotasDelCita.map(m => (
+                  <label key={m.id} className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="radio"
+                      name="mascota-historia"
+                      checked={selectedMascotaId === m.id}
+                      onChange={() => setSelectedMascotaId(m.id)}
+                      className="accent-[#C2570F] w-3.5 h-3.5"
+                    />
+                    <span className="text-sm text-[#2C1A0E] group-hover:text-[#C2570F] transition-colors">{m.nombre}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
           <HistoriaClinicaPanel entradas={entradas} loading={loadingHistoria} recetasMap={recetasMap} />
         </div>
       </div>
@@ -223,7 +263,7 @@ export function DetalleCita() {
         open={showPagoModal}
         onClose={() => setShowPagoModal(false)}
         onConfirm={handleConfirmarPago}
-        montoSugerido={cita?.hueco?.servicio?.precio || ''}
+        montoSugerido={cita?.precio_total || cita?.hueco?.servicio?.precio || ''}
         saving={savingPago}
         error={errorPago}
       />
@@ -234,7 +274,7 @@ export function DetalleCita() {
         onConfirm={handleConfirmarAtencion}
         data={confirmacionData}
         cita={cita}
-        saving={savingReceta}
+        saving={saving}
       />
     </div>
   )

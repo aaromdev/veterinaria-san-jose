@@ -37,8 +37,19 @@ export function DetalleCitaCliente() {
   const [recetaInfo, setRecetaInfo] = useState(null)
   const [loading, setLoading] = useState(true)
   const [errorCarga, setErrorCarga] = useState(null)
+  const [selectedMascotaId, setSelectedMascotaId] = useState(null)
 
-  const { entradas, recetasMap, loading: loadingHistoria } = useHistoriaClinica(cita?.mascota?.id)
+  const mascotasDelCita = cita?.cita_mascota?.map(cm => cm.mascota) || []
+  const { entradas, recetasMap, loading: loadingHistoria } = useHistoriaClinica(selectedMascotaId)
+
+  useEffect(() => {
+    if (mascotasDelCita.length > 0) {
+      setSelectedMascotaId(prev => {
+        if (prev && mascotasDelCita.some(m => m.id === prev)) return prev
+        return mascotasDelCita[0].id
+      })
+    }
+  }, [mascotasDelCita])
 
   const cargar = useCallback(async () => {
     setLoading(true)
@@ -46,9 +57,11 @@ export function DetalleCitaCliente() {
       const { data, error } = await supabase
         .from('cita')
         .select(`
-          id, estado,
+          id, estado, precio_total,
           hueco!cita_id_hueco_fkey!inner ( id, fecha, hora_inicio, hora_fin, sala ( id, nombre ), servicio ( id, nombre, precio ) ),
-          mascota ( id, nombre, especie_mascota ( nombre ) ),
+          cita_mascota (
+            mascota ( id, nombre, especie_mascota ( nombre ) )
+          ),
           cliente ( id, nombre, apellido, telefono ),
           cita_hueco (
             id_hueco,
@@ -108,7 +121,7 @@ export function DetalleCitaCliente() {
   }
 
   const hueco = cita.hueco
-  const mascota = cita.mascota
+  const mascotas = mascotasDelCita
 
   const extras = (cita?.cita_hueco || [])
     .map((ch) => ch.hueco)
@@ -139,16 +152,14 @@ export function DetalleCitaCliente() {
               <Badge estado={cita.estado} />
             </div>
             <div>
-              <InfoRow label="Mascota" value={mascota?.nombre} />
-              <InfoRow label="Especie" value={mascota?.especie_mascota?.nombre} />
+              <InfoRow label="Mascota(s)" value={mascotas.map(m => m.nombre).join(', ')} />
+              {mascotas.length === 1 && <InfoRow label="Especie" value={mascotas[0]?.especie_mascota?.nombre} />}
               <InfoRow label="Servicio" value={hueco?.servicio?.nombre} />
               <InfoRow label="Sala" value={hueco?.sala?.nombre} />
               <InfoRow label="Fecha" value={formatFecha(hueco?.fecha)} />
               <InfoRow label="Hora" value={`${formatHora(horaInicio)} - ${formatHora(horaFin)}`} />
               {cita.cliente?.telefono && <InfoRow label="Teléfono" value={cita.cliente.telefono} />}
-              {hueco?.servicio?.precio && (
-                <InfoRow label="Precio" value={`S/ ${Number(hueco.servicio.precio).toFixed(2)}`} />
-              )}
+              <InfoRow label="Precio" value={`S/ ${Number(cita.precio_total || hueco?.servicio?.precio || 0).toFixed(2)}`} />
             </div>
 
             {pagoInfo && (
@@ -201,7 +212,26 @@ export function DetalleCitaCliente() {
           )}
         </div>
 
-        <div>
+        <div className="space-y-4">
+          {mascotasDelCita.length > 1 && (
+            <div className="bg-white border border-[#E8DDD0] rounded-xl p-4">
+              <h4 className="text-xs font-semibold text-[#2C1A0E] mb-3">Ver historia de</h4>
+              <div className="space-y-2">
+                {mascotasDelCita.map(m => (
+                  <label key={m.id} className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="radio"
+                      name="mascota-historia"
+                      checked={selectedMascotaId === m.id}
+                      onChange={() => setSelectedMascotaId(m.id)}
+                      className="accent-[#C2570F] w-3.5 h-3.5"
+                    />
+                    <span className="text-sm text-[#2C1A0E] group-hover:text-[#C2570F] transition-colors">{m.nombre}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="bg-white border border-[#E8DDD0] rounded-xl p-5">
             <h3 className="text-sm font-semibold text-[#2C1A0E] mb-4">Historia clínica</h3>
             <TimelineHistoria entradas={entradas} loading={loadingHistoria} recetasMap={recetasMap} />

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Button } from '../ui/Button'
 import { sanitize } from '../../lib/validaciones'
 import { MedicamentoModal } from './MedicamentoModal'
@@ -24,61 +24,152 @@ function MedicamentoItem({ item, onRemove }) {
   )
 }
 
-export function RecetaForm({ onFinalizar, saving, error }) {
+export function RecetaForm({ cita, onFinalizar, saving, error }) {
   const { can } = usePermisos()
-  const [diagnostico, setDiagnostico] = useState('')
-  const [observaciones, setObservaciones] = useState('')
-  const [firmada, setFirmada] = useState(false)
-  const [medicamentos, setMedicamentos] = useState([])
-  const [modalOpen, setModalOpen] = useState(false)
-  const [errors, setErrors] = useState({})
-
   const puedeEscribirReceta = can('receta.escribir')
 
+  const mascotas = useMemo(
+    () => cita?.cita_mascota?.map(cm => cm.mascota).filter(Boolean) || [],
+    [cita]
+  )
+
+  const [mascotaIndex, setMascotaIndex] = useState(0)
+  const [porMascota, setPorMascota] = useState(() => {
+    const map = {}
+    ;(mascotas).forEach(m => {
+      map[m.id] = { diagnostico: '', observaciones: '', medicamentos: [] }
+    })
+    return map
+  })
+  const [firmada, setFirmada] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [errors, setErrors] = useState({})
+  const [globalError, setGlobalError] = useState(null)
+
+  const mascotaActual = mascotas[mascotaIndex]
+  const dataActual = porMascota[mascotaActual?.id] || { diagnostico: '', observaciones: '', medicamentos: [] }
+
+  const actualizar = (campo, valor) => {
+    setPorMascota(prev => ({
+      ...prev,
+      [mascotaActual.id]: { ...prev[mascotaActual.id], [campo]: valor }
+    }))
+  }
+
   const agregarMedicamento = (med) => {
-    setMedicamentos((prev) => [...prev, { ...med, id: Date.now() }])
+    actualizar('medicamentos', [...dataActual.medicamentos, { ...med, id: Date.now() }])
     setModalOpen(false)
   }
 
   const eliminarMedicamento = (med) => {
-    setMedicamentos((prev) => prev.filter((m) => m.id !== med.id))
+    actualizar('medicamentos', dataActual.medicamentos.filter(m => m.id !== med.id))
   }
 
   const handleFinalizar = () => {
     const e = {}
-    if (!diagnostico.trim()) e.diagnostico = 'El diagnóstico es obligatorio'
-    if (medicamentos.length === 0) e.medicamentos = 'Agrega al menos un medicamento'
+    let allOk = true
+
+    mascotas.forEach(m => {
+      const d = porMascota[m.id]
+      if (!d?.diagnostico?.trim()) {
+        e[`diag_${m.id}`] = `Diagnóstico para ${m.nombre} es obligatorio`
+        allOk = false
+      }
+      if (!d?.medicamentos?.length) {
+        e[`meds_${m.id}`] = `Agrega al menos un medicamento para ${m.nombre}`
+        allOk = false
+      }
+    })
+
     setErrors(e)
-    if (Object.keys(e).length > 0) return
-    if (typeof onFinalizar === 'function') {
-      onFinalizar({ diagnostico, observaciones, medicamentos, firmado: firmada })
+    if (!allOk) {
+      setGlobalError('Completa todos los campos obligatorios para cada mascota')
+      return
     }
+
+    setGlobalError(null)
+    if (typeof onFinalizar === 'function') {
+      const mascotasAtencion = mascotas.map(m => ({
+        id_mascota: m.id,
+        diagnostico: (porMascota[m.id]?.diagnostico || '').trim(),
+        observaciones: (porMascota[m.id]?.observaciones || '').trim() || null,
+        medicamentos: (porMascota[m.id]?.medicamentos || []).map(med => ({
+          medicamento: (med.nombre || '').trim(),
+          dosis: (med.dosis || '').trim() || null,
+          indicaciones: (med.indicaciones || '').trim() || null,
+        })),
+      }))
+      onFinalizar({ mascotas_atencion: mascotasAtencion, firmado: firmada })
+    }
+  }
+
+  if (mascotas.length === 0) {
+    return (
+      <div className="bg-white border border-[#E8DDD0] rounded-xl p-5">
+        <p className="text-sm text-[#7A6555]">No hay mascotas asociadas a esta cita.</p>
+      </div>
+    )
   }
 
   return (
     <div className="bg-white border border-[#E8DDD0] rounded-xl p-5 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-[#2C1A0E]">Atención clínica</h3>
+        {mascotas.length > 1 && (
+          <span className="text-xs text-[#7A6555] bg-[#FAF7F2] px-2 py-1 rounded-full">
+            {mascotaIndex + 1} de {mascotas.length}
+          </span>
+        )}
       </div>
 
+      {mascotas.length > 1 && (
+        <div className="flex gap-1.5 flex-wrap">
+          {mascotas.map((m, i) => {
+            const completo = porMascota[m.id]?.diagnostico?.trim() && porMascota[m.id]?.medicamentos?.length > 0
+            return (
+              <button
+                key={m.id}
+                onClick={() => setMascotaIndex(i)}
+                className={`text-xs px-3 py-1.5 rounded-full transition-colors ${
+                  i === mascotaIndex
+                    ? 'bg-[#C2570F] text-white'
+                    : completo
+                      ? 'bg-[#E8F5E9] text-[#166534]'
+                      : 'bg-[#FAF7F2] text-[#7A6555] hover:bg-[#F0EDE6]'
+                }`}
+              >
+                {m.nombre}
+                {completo && <span className="ml-1">✓</span>}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       <div>
-        <label className="block text-xs font-medium text-[#7A6555] mb-1.5">Diagnóstico *</label>
+        <label className="block text-xs font-medium text-[#7A6555] mb-1.5">
+          Diagnóstico para {mascotaActual?.nombre} *
+        </label>
         <textarea
-          value={diagnostico}
-          onChange={(e) => setDiagnostico(sanitize(e.target.value, 'text'))}
+          value={dataActual.diagnostico}
+          onChange={(e) => actualizar('diagnostico', sanitize(e.target.value, 'text'))}
           placeholder="Describe el diagnóstico del paciente"
           rows={3}
           disabled={!puedeEscribirReceta}
-          className={`w-full border border-[#E8DDD0] rounded-lg px-3 py-2 text-sm text-[#2C1A0E] bg-white focus:outline-none focus:ring-2 focus:ring-[#C2570F] focus:border-transparent placeholder:text-[#7A6555] resize-none ${errors.diagnostico ? 'border-[#B91C1C]' : ''}`}
+          className={`w-full border border-[#E8DDD0] rounded-lg px-3 py-2 text-sm text-[#2C1A0E] bg-white focus:outline-none focus:ring-2 focus:ring-[#C2570F] focus:border-transparent placeholder:text-[#7A6555] resize-none ${errors[`diag_${mascotaActual?.id}`] ? 'border-[#B91C1C]' : ''}`}
         />
-        {errors.diagnostico && <p className="text-xs text-[#B91C1C] mt-1">{errors.diagnostico}</p>}
+        {errors[`diag_${mascotaActual?.id}`] && (
+          <p className="text-xs text-[#B91C1C] mt-1">{errors[`diag_${mascotaActual?.id}`]}</p>
+        )}
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-[#7A6555] mb-1.5">Observaciones</label>
+        <label className="block text-xs font-medium text-[#7A6555] mb-1.5">
+          Observaciones para {mascotaActual?.nombre}
+        </label>
         <textarea
-          value={observaciones}
-          onChange={(e) => setObservaciones(sanitize(e.target.value, 'text'))}
+          value={dataActual.observaciones}
+          onChange={(e) => actualizar('observaciones', sanitize(e.target.value, 'text'))}
           placeholder="Notas adicionales (opcional)"
           rows={2}
           disabled={!puedeEscribirReceta}
@@ -88,7 +179,10 @@ export function RecetaForm({ onFinalizar, saving, error }) {
 
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-medium text-[#7A6555]">Medicamentos {errors.medicamentos && <span className="text-[#B91C1C] ml-1">*</span>}</label>
+          <label className="text-xs font-medium text-[#7A6555]">
+            Medicamentos para {mascotaActual?.nombre}
+            {errors[`meds_${mascotaActual?.id}`] && <span className="text-[#B91C1C] ml-1">*</span>}
+          </label>
           {puedeEscribirReceta && (
             <button
               onClick={() => setModalOpen(true)}
@@ -98,14 +192,17 @@ export function RecetaForm({ onFinalizar, saving, error }) {
             </button>
           )}
         </div>
-        {medicamentos.length === 0 ? (
-          <p className="text-xs text-[#7A6555] py-2">No hay medicamentos registrados</p>
+        {dataActual.medicamentos.length === 0 ? (
+          <p className="text-xs text-[#7A6555] py-2">No hay medicamentos registrados para {mascotaActual?.nombre}</p>
         ) : (
           <div className="space-y-2">
-            {medicamentos.map((m) => (
+            {dataActual.medicamentos.map((m) => (
               <MedicamentoItem key={m.id} item={m} onRemove={eliminarMedicamento} />
             ))}
           </div>
+        )}
+        {errors[`meds_${mascotaActual?.id}`] && (
+          <p className="text-xs text-[#B91C1C] mt-1">{errors[`meds_${mascotaActual?.id}`]}</p>
         )}
       </div>
 
@@ -121,6 +218,7 @@ export function RecetaForm({ onFinalizar, saving, error }) {
             <span className="text-sm text-[#2C1A0E]">Marcar como firmada</span>
           </label>
 
+          {globalError && <p className="text-xs text-[#B91C1C]">{globalError}</p>}
           {error && <p className="text-xs text-[#B91C1C]">{error}</p>}
 
           <Button

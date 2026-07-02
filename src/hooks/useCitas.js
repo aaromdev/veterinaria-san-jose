@@ -15,13 +15,15 @@ export function useCitas(idCliente) {
     const { data, error } = await supabase
       .from('cita')
       .select(`
-        id, estado, fecha_programada,
+        id, estado, fecha_programada, precio_total,
         hueco!cita_id_hueco_fkey (
           id, fecha, hora_inicio, hora_fin,
           sala ( id, nombre ),
           servicio ( id, nombre, precio )
         ),
-        mascota ( id, nombre ),
+        cita_mascota (
+          mascota ( id, nombre )
+        ),
         cita_hueco (
           id_hueco,
           orden,

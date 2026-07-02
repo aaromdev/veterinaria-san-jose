@@ -24,7 +24,7 @@ function puedeCancelar(estado, fechaHueco) {
 export function CitaCard({ cita, onCancel }) {
   const navigate = useNavigate()
   const hueco = cita?.hueco
-  const mascota = cita?.mascota
+  const mascotas = cita?.cita_mascota?.map(cm => cm.mascota).filter(Boolean) || []
 
   const extras = (cita?.cita_hueco || [])
     .map((ch) => ch.hueco)
@@ -49,7 +49,12 @@ export function CitaCard({ cita, onCancel }) {
 
       <div className="space-y-1 mb-3">
         <p className="text-sm font-medium text-[#2C1A0E]">
-          {mascota?.nombre || 'Mascota'}
+          {mascotas.length > 0 ? mascotas.map(m => m.nombre).join(', ') : 'Mascota'}
+          {mascotas.length > 1 && (
+            <span className="text-[10px] text-[#C2570F] bg-[#FFF3EB] rounded-full px-1.5 ml-1.5 align-middle">
+              x{mascotas.length}
+            </span>
+          )}
         </p>
         <p className="text-xs text-[#7A6555]">
           {hueco?.servicio?.nombre || ''}

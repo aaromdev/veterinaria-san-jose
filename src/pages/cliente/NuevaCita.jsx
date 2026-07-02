@@ -145,7 +145,7 @@ export function NuevaCita() {
       return (ha?.hora_inicio || '').localeCompare(hb?.hora_inicio || '')
     })
 
-    const { data, error: rpcError } = await supabase.rpc('reservar_cita_multi', {
+    const { error: rpcError } = await supabase.rpc('reservar_cita_multi', {
       p_id_cliente: idCliente,
       p_id_servicio: idServicio,
       p_mascotas: mascotasArray,
@@ -156,7 +156,7 @@ export function NuevaCita() {
       setError(rpcError.message)
     } else {
       setSuccessData({
-        count: data?.length || 0,
+        count: 1,
         mascotas: mascotasSeleccionadas.map((m) => m.nombre),
       })
       setSuccess(true)
@@ -185,7 +185,7 @@ export function NuevaCita() {
             </svg>
           </div>
           <h2 className="text-lg font-semibold text-[#2C1A0E] mb-1">
-            ¡{successData.count} cita{successData.count !== 1 ? 's' : ''} reservada{successData.count !== 1 ? 's' : ''} con éxito!
+            ¡Cita reservada con éxito!
           </h2>
           {successData.mascotas.length > 0 && (
             <p className="text-sm text-[#7A6555] mb-3">

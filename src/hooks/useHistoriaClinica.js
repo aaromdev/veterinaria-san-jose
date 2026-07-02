@@ -49,12 +49,27 @@ export function useHistoriaClinica(idMascota) {
           .from('receta')
           .select(`
             id, id_cita, diagnostico, observaciones, firmado,
-            personal ( id, nombre ),
-            receta_detalle ( id, medicamento, dosis, indicaciones )
+            personal ( id, nombre )
           `)
           .in('id_cita', idsCita)
+
+        const recetaIds = (recetas || []).map(r => r.id)
+        const { data: detalles } = await supabase
+          .from('receta_detalle')
+          .select('id, id_receta, medicamento, dosis, indicaciones')
+          .in('id_receta', recetaIds)
+          .or(`id_mascota.eq.${idMascota},id_mascota.is.null`)
+
+        const detallesByReceta = {}
+        ;(detalles || []).forEach(d => {
+          if (!detallesByReceta[d.id_receta]) detallesByReceta[d.id_receta] = []
+          detallesByReceta[d.id_receta].push(d)
+        })
+
         const map = {}
-        ;(recetas || []).forEach(r => { map[r.id_cita] = r })
+        ;(recetas || []).forEach(r => {
+          map[r.id_cita] = { ...r, receta_detalle: detallesByReceta[r.id] || [] }
+        })
         setRecetasMap(map)
       } else {
         setRecetasMap({})
