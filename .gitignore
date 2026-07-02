@@ -9,6 +9,8 @@ lerna-debug.log*
 
 nopush/
 supabase/
+.claude/
+.playwright/
 node_modules
 dist
 dist-ssr

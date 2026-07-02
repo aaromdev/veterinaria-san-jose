@@ -5,11 +5,13 @@ import { usePermisos } from '../../hooks/usePermisos'
 
 function timestampCita(fecha, hora) {
   // Construye la fecha de la cita como Peru (UTC-5) y devuelve timestamp absoluto
-  return new Date(`${fecha}T${hora}:00.000-05:00`).getTime()
+  return new Date(`${fecha}T${(hora || '').slice(0, 5)}:00.000-05:00`).getTime()
 }
 
 function diffMinutos(fecha, hora) {
-  return Math.round((timestampCita(fecha, hora) - Date.now()) / 60000)
+  const ts = timestampCita(fecha, hora)
+  if (isNaN(ts)) return null
+  return Math.round((ts - Date.now()) / 60000)
 }
 
 function InfoRow({ label, value }) {
