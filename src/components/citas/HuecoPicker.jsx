@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 function formatHora(hora) {
   if (!hora) return '--:--'
   return hora.slice(0, 5)
@@ -38,6 +40,8 @@ const PERIODOS = [
 ]
 
 export function HuecoPicker({ agrupadosPorFecha, selected, onChange, maxSeleccion }) {
+  const [slotError, setSlotError] = useState(null)
+
   const fechas = Object.keys(agrupadosPorFecha || {}).sort()
   if (fechas.length === 0) return null
 
@@ -45,10 +49,17 @@ export function HuecoPicker({ agrupadosPorFecha, selected, onChange, maxSeleccio
   const selectedSet = new Set(selected || [])
   const canSelectMore = (selected || []).length < (maxSeleccion || 2)
 
+  const getSelectedHuecos = (ids) => {
+    return ids
+      .map((id) => huecos.find((x) => x.id === id))
+      .filter(Boolean)
+      .sort((a, b) => (a.hora_inicio || '').localeCompare(b.hora_inicio || ''))
+  }
+
   const handleClick = (h) => {
+    setSlotError(null)
     const prev = selected || []
     const max = maxSeleccion || 2
-    const clickedIdx = huecos.indexOf(h)
 
     if (selectedSet.has(h.id)) {
       onChange(prev.filter((id) => id !== h.id))
@@ -60,18 +71,21 @@ export function HuecoPicker({ agrupadosPorFecha, selected, onChange, maxSeleccio
       return
     }
 
-    const selectedIndices = prev
-      .map((id) => huecos.findIndex((x) => x.id === id))
-      .filter((i) => i !== -1)
-      .sort((a, b) => a - b)
+    const selectedHuecos = getSelectedHuecos(prev)
+    const first = selectedHuecos[0]
+    const last = selectedHuecos[selectedHuecos.length - 1]
 
-    const minIdx = selectedIndices[0]
-    const maxIdx = selectedIndices[selectedIndices.length - 1]
-    const isAdjacent = clickedIdx === minIdx - 1 || clickedIdx === maxIdx + 1
+    const isBefore = h.hora_fin === first.hora_inicio
+    const isAfter = h.hora_inicio === last.hora_fin
 
-    if (isAdjacent && prev.length < max) {
-      const allIndices = [...selectedIndices, clickedIdx].sort((a, b) => a - b)
-      onChange(allIndices.map((i) => huecos[i].id))
+    if ((isBefore || isAfter) && prev.length < max) {
+      if (h.sala?.id !== first.sala?.id) {
+        setSlotError(`Los huecos deben ser de la misma sala (${first.sala?.nombre || 'desconocida'})`)
+        return
+      }
+
+      const all = [...selectedHuecos, h].sort((a, b) => (a.hora_inicio || '').localeCompare(b.hora_inicio || ''))
+      onChange(all.map((x) => x.id))
       return
     }
 
@@ -89,6 +103,11 @@ export function HuecoPicker({ agrupadosPorFecha, selected, onChange, maxSeleccio
 
   return (
     <div className="space-y-4">
+      {slotError && (
+        <div className="text-xs text-[#B91C1C] bg-[#FEE2E2] rounded-lg px-3 py-2">
+          {slotError}
+        </div>
+      )}
       {PERIODOS.map((periodo) => {
         const slots = agrupadosPorPeriodo[periodo.key]
         if (!slots || slots.length === 0) return null

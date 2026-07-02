@@ -103,8 +103,9 @@ export function NuevaCita() {
   )
 
   const maxHuecos = mascotasIds.size * 2
+  const minHuecos = mascotasIds.size
   const canNextStep1 = mascotasIds.size > 0 && idServicio
-  const canNextStep2 = huecosIds.length > 0 && huecosIds.length <= maxHuecos
+  const canNextStep2 = huecosIds.length >= minHuecos && huecosIds.length <= maxHuecos
 
   const toggleMascota = useCallback((id) => {
     setMascotasIds((prev) => {
@@ -137,11 +138,18 @@ export function NuevaCita() {
     setConfirmando(true)
     setError(null)
     const mascotasArray = [...mascotasIds]
+
+    const sortedHuecosIds = [...huecosIds].sort((a, b) => {
+      const ha = huecos.find((h) => h.id === a)
+      const hb = huecos.find((h) => h.id === b)
+      return (ha?.hora_inicio || '').localeCompare(hb?.hora_inicio || '')
+    })
+
     const { data, error: rpcError } = await supabase.rpc('reservar_cita_multi', {
       p_id_cliente: idCliente,
       p_id_servicio: idServicio,
       p_mascotas: mascotasArray,
-      p_id_huecos: huecosIds,
+      p_id_huecos: sortedHuecosIds,
     })
     setConfirmando(false)
     if (rpcError) {
@@ -153,7 +161,7 @@ export function NuevaCita() {
       })
       setSuccess(true)
     }
-  }, [idCliente, idServicio, mascotasIds, huecosIds, mascotasSeleccionadas])
+  }, [idCliente, idServicio, mascotasIds, huecosIds, mascotasSeleccionadas, huecos])
 
   if (clienteLoading) {
     return (
@@ -255,7 +263,7 @@ export function NuevaCita() {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-[#2C1A0E]">Elige horarios disponibles</h3>
             <span className="text-xs text-[#7A6555] bg-[#FAF7F2] px-2.5 py-1 rounded-full">
-              {mascotasIds.size} mascota{mascotasIds.size !== 1 ? 's' : ''} · max {maxHuecos} hueco{maxHuecos !== 1 ? 's' : ''}
+              {mascotasIds.size} mascota{mascotasIds.size !== 1 ? 's' : ''} · {minHuecos}–{maxHuecos} hueco{maxHuecos !== 1 ? 's' : ''}
             </span>
           </div>
 
@@ -306,6 +314,12 @@ export function NuevaCita() {
               onChange={setHuecosIds}
               maxSeleccion={maxHuecos}
             />
+          )}
+
+          {huecosIds.length > 0 && huecosIds.length < minHuecos && (
+            <p className="text-xs text-[#B91C1C] text-center">
+              Con {mascotasIds.size} mascota{mascotasIds.size !== 1 ? 's' : ''} debes seleccionar al menos {minHuecos} hueco{minHuecos !== 1 ? 's' : ''} consecutivos.
+            </p>
           )}
 
           <div className="flex justify-between pt-4">
