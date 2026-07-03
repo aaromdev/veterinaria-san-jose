@@ -1,6 +1,11 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 
+/** Detecta si dos rangos horarios (HH:MM:SS) se solapan */
+function rangesOverlap(aInicio, aFin, bInicio, bFin) {
+  return aInicio < bFin && bInicio < aFin
+}
+
 export function usePlantillas() {
   const [plantillas, setPlantillas] = useState([])
   const [loading, setLoading] = useState(true)
@@ -97,40 +102,87 @@ export function usePlantillas() {
 
   // ── CRUD (sin cambios) ────────────────────────────────────
   const agregar = useCallback(async (datos) => {
-    const { data, error } = await supabase.rpc('crear_plantilla', {
-      p_id_servicio:       datos.id_servicio,
-      p_id_sala:           datos.id_sala,
-      p_dia_semana:        parseInt(datos.dia_semana),
-      p_hora_inicio:       datos.hora_inicio,
-      p_hora_fin:          datos.hora_fin,
-      p_intervalo_minutos: parseInt(datos.intervalo_minutos),
-    })
-    if (error) throw error
-    setPlantillas((prev) => [...prev, data])
-  }, [])
+    // Validar solapamiento localmente (feedback inmediato)
+    const dia = parseInt(datos.dia_semana)
+    const solapada = plantillas.some(
+      (p) =>
+        p.servicio?.id === datos.id_servicio &&
+        p.sala?.id === datos.id_sala &&
+        p.dia_semana === dia &&
+        rangesOverlap(
+          p.hora_inicio, p.hora_fin,
+          datos.hora_inicio, datos.hora_fin
+        )
+    )
+    if (solapada) {
+      throw new Error('Ya existe una plantilla que se solapa con este horario para el mismo servicio, sala y día')
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('crear_plantilla', {
+        p_id_servicio:       datos.id_servicio,
+        p_id_sala:           datos.id_sala,
+        p_dia_semana:        dia,
+        p_hora_inicio:       datos.hora_inicio,
+        p_hora_fin:          datos.hora_fin,
+        p_intervalo_minutos: parseInt(datos.intervalo_minutos),
+      })
+      if (error) throw error
+      setPlantillas((prev) => [...prev, data])
+    } catch (err) {
+      if (err?.code === '23P01' || err?.message?.includes('solapa')) {
+        throw new Error('Ya existe una plantilla que se solapa con este horario para el mismo servicio, sala y día')
+      }
+      throw err
+    }
+  }, [plantillas])
 
   const actualizar = useCallback(async (id, datos) => {
+    // Verificar que la nueva combinación no solape otra plantilla existente
+    const dia = parseInt(datos.dia_semana)
+    const conflicto = plantillas.some(
+      (p) =>
+        p.id !== id &&
+        p.servicio?.id === datos.id_servicio &&
+        p.sala?.id === datos.id_sala &&
+        p.dia_semana === dia &&
+        rangesOverlap(
+          p.hora_inicio, p.hora_fin,
+          datos.hora_inicio, datos.hora_fin
+        )
+    )
+    if (conflicto) {
+      throw new Error('Ya existe otra plantilla que se solapa con este horario para el mismo servicio, sala y día')
+    }
+
     const { data: sv } = await supabase.from('servicio').select('id_categoria_sala').eq('id', datos.id_servicio).single()
     const { data: sl } = await supabase.from('sala').select('id_categoria').eq('id', datos.id_sala).single()
     if (sv && sl && sv.id_categoria_sala !== sl.id_categoria)
       throw new Error('La sala no corresponde a la categoría del servicio')
 
-    const { data, error } = await supabase
-      .from('plantilla_horario')
-      .update({
-        id_servicio:       datos.id_servicio,
-        id_sala:           datos.id_sala,
-        dia_semana:        parseInt(datos.dia_semana),
-        hora_inicio:       datos.hora_inicio,
-        hora_fin:          datos.hora_fin,
-        intervalo_minutos: parseInt(datos.intervalo_minutos),
-      })
-      .eq('id', id)
-      .select(`id, dia_semana, hora_inicio, hora_fin, intervalo_minutos, is_active, servicio ( id, nombre ), sala ( id, nombre )`)
-      .single()
-    if (error) throw error
-    setPlantillas((prev) => prev.map((p) => (p.id === id ? data : p)))
-  }, [])
+    try {
+      const { data, error } = await supabase
+        .from('plantilla_horario')
+        .update({
+          id_servicio:       datos.id_servicio,
+          id_sala:           datos.id_sala,
+          dia_semana:        dia,
+          hora_inicio:       datos.hora_inicio,
+          hora_fin:          datos.hora_fin,
+          intervalo_minutos: parseInt(datos.intervalo_minutos),
+        })
+        .eq('id', id)
+        .select(`id, dia_semana, hora_inicio, hora_fin, intervalo_minutos, is_active, servicio ( id, nombre ), sala ( id, nombre )`)
+        .single()
+      if (error) throw error
+      setPlantillas((prev) => prev.map((p) => (p.id === id ? data : p)))
+    } catch (err) {
+      if (err?.code === '23P01') {
+        throw new Error('Ya existe otra plantilla que se solapa con este horario para el mismo servicio, sala y día')
+      }
+      throw err
+    }
+  }, [plantillas])
 
   const toggleActivo = useCallback(async (id) => {
     const plantilla = plantillas.find((p) => p.id === id)

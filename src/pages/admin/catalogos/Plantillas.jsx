@@ -36,7 +36,7 @@ const FORM_VACIO = {
   intervalo_minutos: '',
 }
 
-function validar(f, servicios, salas) {
+function validar(f, servicios, salas, plantillas, editandoId) {
   const e = {}
 
   if (!f.id_servicio)
@@ -56,10 +56,37 @@ function validar(f, servicios, salas) {
     ) {
       e.id_sala = 'La sala no corresponde a la categoría del servicio'
     }
+
+    // Validar intervalo >= duración del servicio
+    if (
+      servicio &&
+      f.intervalo_minutos &&
+      !isNaN(f.intervalo_minutos) &&
+      parseInt(f.intervalo_minutos) < servicio.duracion_minutos
+    ) {
+      e.intervalo_minutos = `El intervalo no puede ser menor que la duración del servicio (${servicio.duracion_minutos} min)`
+    }
   }
 
   if (f.dia_semana === '')
     e.dia_semana = 'Selecciona un día'
+
+  // Validar solapamiento de horarios
+  if (f.id_servicio && f.id_sala && f.dia_semana !== '' && f.hora_inicio && f.hora_fin) {
+    const dia = parseInt(f.dia_semana)
+    const solapada = plantillas.some(
+      (p) =>
+        p.id !== editandoId &&
+        p.servicio?.id === f.id_servicio &&
+        p.sala?.id === f.id_sala &&
+        p.dia_semana === dia &&
+        f.hora_inicio < p.hora_fin &&
+        f.hora_fin > p.hora_inicio
+    )
+    if (solapada) {
+      e.id_servicio = 'Ya existe una plantilla que se solapa con este horario para el mismo servicio, sala y día'
+    }
+  }
 
   if (!f.hora_inicio)
     e.hora_inicio = 'Requerido'
@@ -204,7 +231,7 @@ export function Plantillas() {
   }
 
   const guardar = async () => {
-    const e = validar(form, servicios, salas)
+    const e = validar(form, servicios, salas, plantillas, modal.editando?.id)
 
     setErrors(e)
 
@@ -491,6 +518,15 @@ export function Plantillas() {
           placeholder="30"
           filter="digits"
         />
+        {form.id_servicio && (() => {
+          const sv = servicios.find(s => s.id === form.id_servicio)
+          if (!sv?.duracion_minutos) return null
+          return (
+            <p className="text-xs text-[#7A6555] -mt-1">
+              Duración del servicio: {sv.duracion_minutos} min. El intervalo debe ser mayor o igual.
+            </p>
+          )
+        })()}
       </CatalogoModal>
     </CatalogoLayout>
   )
