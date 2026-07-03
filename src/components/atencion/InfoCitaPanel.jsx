@@ -35,6 +35,12 @@ export function InfoCitaPanel({
 }) {
   const { can } = usePermisos()
 
+  const formatFecha = (fecha) => {
+    if (!fecha) return '—'
+    const d = new Date(fecha + 'T00:00:00')
+    return d.toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' })
+  }
+
   const formatHora = (hora) => hora?.slice(0, 5) || '--:--'
 
   const mascotas = cita?.cita_mascota?.map(cm => cm.mascota).filter(Boolean) || []
@@ -68,6 +74,7 @@ export function InfoCitaPanel({
         <InfoRow label="Mascota(s)" value={mascotas.length > 0 ? mascotas.map(m => m.nombre).join(', ') : '—'} />
         <InfoRow label="Servicio" value={cita?.hueco?.servicio?.nombre} />
         <InfoRow label="Sala" value={cita?.hueco?.sala?.nombre} />
+        <InfoRow label="Fecha" value={formatFecha(cita?.hueco?.fecha)} />
         <InfoRow label="Hora" value={`${formatHora(horaInicio)} - ${formatHora(horaFin)}`} />
         <InfoRow label="Teléfono" value={cita?.cliente?.telefono} />
         {precioTotal > 0 && <InfoRow label="Total" value={`S/ ${precioTotal.toFixed(2)}`} />}
