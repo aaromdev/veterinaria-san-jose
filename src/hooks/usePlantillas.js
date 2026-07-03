@@ -50,12 +50,12 @@ export function usePlantillas() {
   }, [])
 
   // ── Filtrado combinado (día + fecha) ──────────────────────
-  const filtrarPlantillas = useCallback((busqueda = '', filtroDia = '') => {
+  const filtrarPlantillas = useCallback((busqueda = '', diasSeleccionados = []) => {
     let data = plantillas
 
-    // Filtro por día de semana (selector existente)
-    if (filtroDia !== '') {
-      data = data.filter((p) => String(p.dia_semana) === filtroDia)
+    // Filtro por días de semana (checkboxes)
+    if (diasSeleccionados.length > 0) {
+      data = data.filter((p) => diasSeleccionados.includes(p.dia_semana))
     }
 
     // Filtro por fecha exacta

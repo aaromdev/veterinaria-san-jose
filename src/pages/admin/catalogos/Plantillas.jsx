@@ -27,6 +27,16 @@ const DIA_OPTIONS = DIAS.map((d, i) => ({
   label: d,
 }))
 
+const DIAS_CHECKBOX = [
+  { value: 1, label: 'Lun' },
+  { value: 2, label: 'Mar' },
+  { value: 3, label: 'Mié' },
+  { value: 4, label: 'Jue' },
+  { value: 5, label: 'Vie' },
+  { value: 6, label: 'Sáb' },
+  { value: 0, label: 'Dom' },
+]
+
 const FORM_VACIO = {
   id_servicio: '',
   id_sala: '',
@@ -174,7 +184,19 @@ export function Plantillas() {
   const [errors, setErrors] = useState({})
   const [saving, setSaving] = useState(false)
   const [busqueda, setBusqueda] = useState('')
-  const [filtroDia, setFiltroDia] = useState('')
+  const [diasSeleccionados, setDiasSeleccionados] = useState([])
+
+  const toggleDia = (dia) => {
+    setDiasSeleccionados((prev) =>
+      prev.includes(dia) ? prev.filter((d) => d !== dia) : [...prev, dia]
+    )
+  }
+
+  const resetFiltros = () => {
+    setBusqueda('')
+    setDiasSeleccionados([])
+    limpiarFiltrosFecha()
+  }
 
   const servicioOptions = useMemo(
     () =>
@@ -199,9 +221,9 @@ export function Plantillas() {
   )
 
   const filtrados = useMemo(
-  () => filtrarPlantillas(busqueda, filtroDia),
-  [filtrarPlantillas, busqueda, filtroDia]
-)
+    () => filtrarPlantillas(busqueda, diasSeleccionados),
+    [filtrarPlantillas, busqueda, diasSeleccionados]
+  )
 
   const abrirCrear = () => {
     setForm(FORM_VACIO)
@@ -295,15 +317,31 @@ export function Plantillas() {
         placeholder="Buscar por servicio o sala..."
         value={busqueda}
         onChange={setBusqueda}
-        filtros={[
-          {
-            label: 'Todos los días',
-            value: filtroDia,
-            onChange: setFiltroDia,
-            options: DIA_OPTIONS,
-          },
-        ]}
+        filtros={[]}
       />
+
+      {/* Checkboxes de días */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <span className="mr-1 text-xs font-medium text-[#7A6555]">Días:</span>
+        {DIAS_CHECKBOX.map((dia) => {
+          const activo = diasSeleccionados.includes(dia.value)
+          return (
+            <button
+              key={dia.value}
+              type="button"
+              onClick={() => toggleDia(dia.value)}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors border ${
+                activo
+                  ? 'bg-[#C2570F] text-white border-[#C2570F]'
+                  : 'bg-white text-[#7A6555] border-[#D9C6B5] hover:border-[#C2570F] hover:text-[#C2570F]'
+              }`}
+            >
+              {dia.label}
+            </button>
+          )
+        })}
+      </div>
+
       <div className="mt-4 flex flex-wrap items-end gap-4 rounded-xl border border-[#E8DDD0] bg-[#FAF9F6] p-4">
 
   <div>
@@ -330,14 +368,12 @@ export function Plantillas() {
     />
   </div>
 
-  {hayFiltroFecha && (
-    <button
-      onClick={limpiarFiltrosFecha}
-      className="rounded-lg border border-[#D9C6B5] px-4 py-2 text-sm text-[#7A6555] hover:bg-white"
-    >
-      Limpiar fechas
-    </button>
-  )}
+  <button
+    onClick={resetFiltros}
+    className="rounded-lg border border-[#D9C6B5] px-4 py-2 text-sm text-[#7A6555] hover:bg-white transition-colors"
+  >
+    Limpiar filtros
+  </button>
 
   <div className="ml-auto text-sm font-medium text-[#7A6555]">
     {filtrados.length} resultado{filtrados.length !== 1 ? 's' : ''}
@@ -392,7 +428,7 @@ export function Plantillas() {
                   colSpan={7}
                   className="px-5 py-8 text-center text-sm text-[#7A6555]"
                 >
-                  {busqueda
+                  {busqueda || diasSeleccionados.length > 0 || hayFiltroFecha
                     ? 'Sin resultados para esta búsqueda'
                     : 'Sin registros'}
                 </td>
