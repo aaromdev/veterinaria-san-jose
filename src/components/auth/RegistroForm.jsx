@@ -131,8 +131,6 @@ export function RegistroForm() {
 
       navigate('/cliente/mascotas')
     } catch (err) {
-      try { await supabase.rpc('limpiar_registro_fallido') }
-      catch (e) { /* ignore */ }
       await supabase.auth.signOut()
       setCliente(clienteVacio)
       setMascota(mascotaVacia)

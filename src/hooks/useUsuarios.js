@@ -79,9 +79,6 @@ export function useUsuarios() {
       await cargar()
       return true
     } catch (err) {
-      if (cuentaId) {
-        await supabase.rpc('admin_limpiar_cuenta', { p_cuenta_id: cuentaId }).catch(() => {})
-      }
       setError(err.message)
       return false
     } finally {
