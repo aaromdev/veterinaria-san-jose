@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { TimelineHistoria } from '../../components/historia/TimelineHistoria'
 import { useHistoriaClinica } from '../../hooks/useHistoriaClinica'
+import { calcularEdad } from '../../lib/edad'
 
 export function HistoriaClinica() {
   const { idMascota } = useParams()
@@ -35,19 +36,7 @@ export function HistoriaClinica() {
 
   useEffect(() => { cargarMascota() }, [cargarMascota])
 
-  const calcEdad = (fechaNac) => {
-    if (!fechaNac) return null
-    const hoy = new Date()
-    const nac = new Date(fechaNac)
-    let años = hoy.getFullYear() - nac.getFullYear()
-    const mes = hoy.getMonth() - nac.getMonth()
-    if (mes < 0 || (mes === 0 && hoy.getDate() < nac.getDate())) años--
-    if (años < 1) {
-      const meses = (hoy.getMonth() + 12 - nac.getMonth()) % 12 || 12
-      return `${meses} mes${meses !== 1 ? 'es' : ''}`
-    }
-    return `${años} año${años !== 1 ? 's' : ''}`
-  }
+  const calcEdad = (fechaNac) => calcularEdad(fechaNac)
 
   const loading = loadingMascota || loadingEntradas
 

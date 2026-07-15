@@ -65,7 +65,7 @@ export function useMascotas() {
         p_id_especie: datos.id_especie,
         p_id_raza: datos.id_raza || null,
         p_nombre: datos.nombre.trim(),
-        p_fecha_nacimiento: datos.fecha_nacimiento,
+        p_fecha_nacimiento: datos.fecha_nacimiento || null,
       })
     if (mascotaError) throw new Error(formatearErrorSupabase(mascotaError))
 
@@ -102,7 +102,7 @@ export function useMascotas() {
         nombre: datos.nombre.trim(),
         id_especie: datos.id_especie,
         id_raza: datos.id_raza || null,
-        fecha_nacimiento: datos.fecha_nacimiento,
+        fecha_nacimiento: datos.fecha_nacimiento || null,
       })
       .eq('id', id)
       .select(`

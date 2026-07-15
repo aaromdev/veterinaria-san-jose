@@ -11,9 +11,7 @@ function validar(d) {
   const errLong = validarLongitud(d.nombre, LIMITES.MASCOTA_NOMBRE, 'El nombre')
   if (errLong) e.nombre = errLong
   if (!d.id_especie) e.id_especie = 'Selecciona una especie'
-  if (!d.fecha_nacimiento) {
-    e.fecha_nacimiento = 'Campo obligatorio'
-  } else if (d.fecha_nacimiento > new Date().toISOString().split('T')[0]) {
+  if (d.fecha_nacimiento && d.fecha_nacimiento > new Date().toISOString().split('T')[0]) {
     e.fecha_nacimiento = 'La fecha no puede ser futura'
   }
   return e
@@ -36,7 +34,7 @@ export function EditarMascota() {
         nombre: mascota.nombre,
         id_especie: mascota.especie_mascota?.id || '',
         id_raza: mascota.raza?.id || '',
-        fecha_nacimiento: mascota.fecha_nacimiento,
+        fecha_nacimiento: mascota.fecha_nacimiento || null,
       })
     }
   }, [mascota])

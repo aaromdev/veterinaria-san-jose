@@ -2,21 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMascotas } from '../../hooks/useMascotas'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
-
-function calcularEdad(fechaNacimiento) {
-  const nacimiento = new Date(fechaNacimiento)
-  const hoy = new Date()
-  let años = hoy.getFullYear() - nacimiento.getFullYear()
-  let meses = hoy.getMonth() - nacimiento.getMonth()
-  if (meses < 0 || (meses === 0 && hoy.getDate() < nacimiento.getDate())) {
-    años--
-    meses += 12
-  }
-  if (años < 1) {
-    return `${meses} ${meses === 1 ? 'mes' : 'meses'}`
-  }
-  return `${años} ${años === 1 ? 'año' : 'años'}`
-}
+import { calcularEdad } from '../../lib/edad'
 
 function MascotaCard({ mascota, onEliminar }) {
   const [confirmando, setConfirmando] = useState(false)

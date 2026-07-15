@@ -1,21 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { calcularEdad } from '../../lib/edad'
 
 function MascotaCard({ mascota, onVerHistoria }) {
-  const calcEdad = (fechaNac) => {
-    if (!fechaNac) return null
-    const hoy = new Date()
-    const nac = new Date(fechaNac)
-    let años = hoy.getFullYear() - nac.getFullYear()
-    const mes = hoy.getMonth() - nac.getMonth()
-    if (mes < 0 || (mes === 0 && hoy.getDate() < nac.getDate())) años--
-    if (años < 1) {
-      const meses = (hoy.getMonth() + 12 - nac.getMonth()) % 12 || 12
-      return `${meses} mes${meses !== 1 ? 'es' : ''}`
-    }
-    return `${años} año${años !== 1 ? 's' : ''}`
-  }
+  const calcEdad = (fechaNac) => calcularEdad(fechaNac)
 
   return (
     <div className="bg-white border border-[#E8DDD0] rounded-xl p-4 hover:shadow-sm transition-shadow">

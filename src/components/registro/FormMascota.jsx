@@ -40,7 +40,7 @@ export function FormMascota({ data, onChange, onSubmit, errors, submitLabel = 'F
         error={errors.id_raza}
       />
       <Input
-        label="Fecha de nacimiento"
+        label="Fecha de nacimiento (opcional)"
         type="date"
         max={hoyISO()}
         value={data.fecha_nacimiento}
