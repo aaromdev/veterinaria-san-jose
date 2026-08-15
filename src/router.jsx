@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Navigate, Outlet, createBrowserRouter } from 'react-router-dom'
+import { Navigate, Outlet, createHashRouter } from 'react-router-dom'
 
 import { LayoutPublico } from './components/layout/LayoutPublico'
 import { LayoutCliente } from './components/layout/LayoutCliente'
@@ -48,7 +48,7 @@ const withSuspense = (element) => (
   </ErrorBoundary>
 )
 
-export const router = createBrowserRouter([
+export const router = createHashRouter([
   {
     path: '/',
     element: <LayoutPublico />,
